@@ -1,0 +1,43 @@
+{
+  "name": "FoxChat Conversation to MentionFox Den Task",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-07-foxchat-to-den"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "foxchat-conversation-handoff",
+        "options": {}
+      },
+      "id": "1",
+      "name": "FoxChat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "foxchat-handoff-hook"
+    },
+    {
+      "parameters": {
+        "resource": "den",
+        "operation": "create_den_task",
+        "persona": "founder",
+        "task_title": "=FoxChat handoff: {{$json[\"summary\"]}}",
+        "task_body": "={{$json[\"transcript\"]}}",
+        "source_url": "={{$json[\"foxchat_session_url\"]}}"
+      },
+      "id": "2",
+      "name": "MentionFox: Create Den Task",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "FoxChat Webhook": { "main": [[{ "node": "MentionFox: Create Den Task", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "foxchat", "den", "task-management"]
+}

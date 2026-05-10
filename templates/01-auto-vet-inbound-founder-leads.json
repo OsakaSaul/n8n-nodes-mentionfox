@@ -1,0 +1,51 @@
+{
+  "name": "Auto-Vet Inbound Founder Leads (HubSpot to MentionFox to Slack)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-01-auto-vet-inbound"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "events": ["contact.creation"]
+      },
+      "id": "1",
+      "name": "HubSpot Trigger",
+      "type": "n8n-nodes-base.hubspotTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "resource": "subject",
+        "operation": "vet_person",
+        "subject_type": "founder",
+        "name": "={{$json[\"firstname\"] + \" \" + $json[\"lastname\"]}}",
+        "company": "={{$json[\"company\"]}}"
+      },
+      "id": "2",
+      "name": "MentionFox: Vet Founder",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#inbound-leads",
+        "text": "=New founder lead vetted: *{{$node[\"HubSpot Trigger\"].json[\"firstname\"]}} {{$node[\"HubSpot Trigger\"].json[\"lastname\"]}}* ({{$node[\"HubSpot Trigger\"].json[\"company\"]}})\n\nVerdict: {{$json[\"headline\"] || $json[\"summary\"] || \"see report\"}}\nPublic URL: {{$json[\"public_url\"] || \"n/a\"}}\nFit score: {{$json[\"investor_stage_fit_score\"] || $json[\"founder_market_fit\"] || \"n/a\"}}"
+      },
+      "id": "3",
+      "name": "Slack Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "HubSpot Trigger": { "main": [[{ "node": "MentionFox: Vet Founder", "type": "main", "index": 0 }]] },
+    "MentionFox: Vet Founder": { "main": [[{ "node": "Slack Notify", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "vetting", "due-diligence", "hubspot", "slack"]
+}

@@ -1,0 +1,86 @@
+{
+  "name": "Vet Candidate Before Interview (Greenhouse to MentionFox to Slack)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-04-vet-candidate"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "events": ["candidate_stage_change"]
+      },
+      "id": "1",
+      "name": "Greenhouse Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "greenhouse-vet-hook"
+    },
+    {
+      "parameters": {
+        "resource": "subject",
+        "operation": "get_dossier",
+        "name": "={{$json[\"candidate_name\"]}}",
+        "format": "summary"
+      },
+      "id": "2",
+      "name": "MentionFox: Dossier",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"red_flags\"] && $json[\"red_flags\"].length > 0 ? \"red\" : \"green\"}}",
+              "operation": "equals",
+              "value2": "red"
+            }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "If Red Flags",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#hr-alerts",
+        "text": "=*Red flag on candidate {{$node[\"Greenhouse Trigger\"].json[\"candidate_name\"]}}*\n\n{{$node[\"MentionFox: Dossier\"].json[\"red_flags\"]}}\n\nDossier: {{$node[\"MentionFox: Dossier\"].json[\"share_url\"]}}"
+      },
+      "id": "4",
+      "name": "Slack: Red Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "channel": "#hiring",
+        "text": "=Cleared candidate {{$node[\"Greenhouse Trigger\"].json[\"candidate_name\"]}} — no red flags. Dossier: {{$node[\"MentionFox: Dossier\"].json[\"share_url\"]}}"
+      },
+      "id": "5",
+      "name": "Slack: Green",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [960, 400]
+    }
+  ],
+  "connections": {
+    "Greenhouse Trigger": { "main": [[{ "node": "MentionFox: Dossier", "type": "main", "index": 0 }]] },
+    "MentionFox: Dossier": { "main": [[{ "node": "If Red Flags", "type": "main", "index": 0 }]] },
+    "If Red Flags": {
+      "main": [
+        [{ "node": "Slack: Red Alert", "type": "main", "index": 0 }],
+        [{ "node": "Slack: Green", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "hr", "greenhouse", "candidate-vetting", "slack"]
+}

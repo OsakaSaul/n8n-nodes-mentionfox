@@ -1,0 +1,63 @@
+{
+  "name": "Compare Top 3 Conference Speakers (Eventbrite to MentionFox to Notion)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-05-compare-speakers"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "events": ["new_event_speakers"]
+      },
+      "id": "1",
+      "name": "Eventbrite Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "eventbrite-speakers-hook"
+    },
+    {
+      "parameters": {
+        "resource": "subject",
+        "operation": "compare_subjects",
+        "people": {
+          "values": [
+            { "name": "={{$json[\"speakers\"][0][\"name\"]}}" },
+            { "name": "={{$json[\"speakers\"][1][\"name\"]}}" },
+            { "name": "={{$json[\"speakers\"][2][\"name\"]}}" }
+          ]
+        },
+        "context": "speaker selection for our conference"
+      },
+      "id": "2",
+      "name": "MentionFox: Compare 3",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": "YOUR_SPEAKERS_DB_ID",
+        "title": "=Speaker comparison — {{$today.format('yyyy-MM-dd')}}",
+        "propertiesUi": {
+          "propertyValues": [
+            { "key": "Comparison JSON", "textContent": "={{JSON.stringify($json[\"dimensions\"])}}" }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "Notion: Log Comparison",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Eventbrite Trigger": { "main": [[{ "node": "MentionFox: Compare 3", "type": "main", "index": 0 }]] },
+    "MentionFox: Compare 3": { "main": [[{ "node": "Notion: Log Comparison", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "eventbrite", "comparison", "notion"]
+}

@@ -1,0 +1,70 @@
+{
+  "name": "Reddit Signal to Personalized Outreach",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-03-reddit-outreach"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "triggerType": "on_new_high_intent_lead",
+        "topic": "your product or competitor",
+        "sources": "reddit",
+        "hours_back": 1,
+        "intent_threshold": 60
+      },
+      "id": "1",
+      "name": "Trigger: New High-Intent Mention",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "polling": [{ "field": "everyMinute", "value": 30 }]
+    },
+    {
+      "parameters": {
+        "resource": "lead",
+        "operation": "find_contact",
+        "name": "={{$json[\"author\"] || $json[\"username\"] || \"\"}}"
+      },
+      "id": "2",
+      "name": "MentionFox: Find Contact",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "resource": "outreach",
+        "operation": "build_sequence",
+        "recipient_name": "={{$json[\"full_name\"]}}",
+        "recipient_email": "={{$json[\"emails\"][0][\"value\"]}}",
+        "sequence_template": "reddit-signal-warm",
+        "context": "={{$node[\"Trigger: New High-Intent Mention\"].json[\"content\"]}}"
+      },
+      "id": "3",
+      "name": "MentionFox: Build Sequence",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.apollo.io/v1/emailer_campaigns/{{$json[\"sequence_id\"]}}/add_contacts",
+        "options": {}
+      },
+      "id": "4",
+      "name": "Apollo: Send Sequence",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Trigger: New High-Intent Mention": { "main": [[{ "node": "MentionFox: Find Contact", "type": "main", "index": 0 }]] },
+    "MentionFox: Find Contact": { "main": [[{ "node": "MentionFox: Build Sequence", "type": "main", "index": 0 }]] },
+    "MentionFox: Build Sequence": { "main": [[{ "node": "Apollo: Send Sequence", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "reddit", "outreach", "apollo"]
+}

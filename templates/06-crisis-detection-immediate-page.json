@@ -1,0 +1,57 @@
+{
+  "name": "Crisis Detection to Immediate Slack Page + Linear Incident",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-06-crisis-detection"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "triggerType": "on_crisis_signal_detected",
+        "topic": "yourbrand",
+        "sources": "twitter,reddit,hackernews,news",
+        "hours_back": 1,
+        "crisis_keywords": "lawsuit,outage,breach,scandal,layoff,bankruptcy,exploit,hack,leak"
+      },
+      "id": "1",
+      "name": "Trigger: Crisis Signal",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "polling": [{ "field": "everyMinute", "value": 5 }]
+    },
+    {
+      "parameters": {
+        "channel": "@incident-owner",
+        "text": "=:rotating_light: *CRISIS SIGNAL — yourbrand*\n\nKeywords matched: {{$json[\"crisis_keywords_matched\"]}}\nPlatform: {{$json[\"source_platform\"]}}\nURL: {{$json[\"source_url\"]}}\nContent excerpt: {{$json[\"content\"].substring(0, 200)}}"
+      },
+      "id": "2",
+      "name": "Slack: Page Owner",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [480, 220]
+    },
+    {
+      "parameters": {
+        "url": "https://api.linear.app/graphql",
+        "options": {}
+      },
+      "id": "3",
+      "name": "Linear: Create Incident",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [480, 400]
+    }
+  ],
+  "connections": {
+    "Trigger: Crisis Signal": {
+      "main": [[
+        { "node": "Slack: Page Owner", "type": "main", "index": 0 },
+        { "node": "Linear: Create Incident", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "crisis-detection", "slack", "linear", "incident-management"]
+}

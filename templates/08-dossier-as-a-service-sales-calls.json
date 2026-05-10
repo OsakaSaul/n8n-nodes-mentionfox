@@ -1,0 +1,78 @@
+{
+  "name": "Dossier-as-a-Service for Sales Calls (Calendar to MentionFox to Email)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-08-dossier-pre-call"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "triggerOn": "eventStarted",
+        "calendarId": "primary",
+        "options": { "minutesBefore": 60 }
+      },
+      "id": "1",
+      "name": "Calendar: 60min Before Call",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"attendees\"] ? $json[\"attendees\"].length : 0}}",
+              "operation": "larger",
+              "value2": "1"
+            }
+          ]
+        }
+      },
+      "id": "2",
+      "name": "If External Attendee",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "resource": "subject",
+        "operation": "get_dossier",
+        "name": "={{$json[\"attendees\"][0][\"displayName\"] || $json[\"attendees\"][0][\"email\"].split(\"@\")[0]}}",
+        "format": "summary"
+      },
+      "id": "3",
+      "name": "MentionFox: Dossier",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [700, 220]
+    },
+    {
+      "parameters": {
+        "fromEmail": "rep@yourcompany.com",
+        "toEmail": "={{$node[\"Calendar: 60min Before Call\"].json[\"organizer\"][\"email\"]}}",
+        "subject": "=Dossier: {{$node[\"Calendar: 60min Before Call\"].json[\"summary\"]}} (in 60 min)",
+        "html": "=<h1>Pre-call dossier</h1><p>{{$node[\"MentionFox: Dossier\"].json[\"summary\"] || $node[\"MentionFox: Dossier\"].json[\"text\"]}}</p><p><a href='{{$node[\"MentionFox: Dossier\"].json[\"share_url\"]}}'>Open full dossier</a></p>"
+      },
+      "id": "4",
+      "name": "Email Rep",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [940, 220]
+    }
+  ],
+  "connections": {
+    "Calendar: 60min Before Call": { "main": [[{ "node": "If External Attendee", "type": "main", "index": 0 }]] },
+    "If External Attendee": {
+      "main": [
+        [{ "node": "MentionFox: Dossier", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "MentionFox: Dossier": { "main": [[{ "node": "Email Rep", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "sales", "calendar", "dossier", "email"]
+}

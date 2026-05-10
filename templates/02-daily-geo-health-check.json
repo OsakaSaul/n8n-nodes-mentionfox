@@ -1,0 +1,84 @@
+{
+  "name": "Daily GEO Health Check (Cron to MentionFox to Notion + Slack)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-02-daily-geo"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 9 * * *" }] }
+      },
+      "id": "1",
+      "name": "Daily 09:00 Cron",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "resource": "geoFixer",
+        "operation": "run_audit",
+        "brand_domain": "yourbrand.com",
+        "wait_for_completion": true,
+        "scan_depth": "light"
+      },
+      "id": "2",
+      "name": "Run GEO Audit",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [460, 220]
+    },
+    {
+      "parameters": {
+        "resource": "geoFixer",
+        "operation": "list_gaps",
+        "brand_domain": "yourbrand.com",
+        "n": 5
+      },
+      "id": "3",
+      "name": "List Top 5 Gaps",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [680, 220]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": "YOUR_NOTION_DB_ID",
+        "title": "=GEO Score {{$today.format('yyyy-MM-dd')}}",
+        "propertiesUi": {
+          "propertyValues": [
+            { "key": "Score", "numberValue": "={{$node[\"Run GEO Audit\"].json[\"overall_score\"]}}" },
+            { "key": "Top Gap", "textContent": "={{$node[\"List Top 5 Gaps\"].json[\"actions\"][0][\"title\"]}}" }
+          ]
+        }
+      },
+      "id": "4",
+      "name": "Notion: Log Score",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "channel": "#geo-health",
+        "text": "=Daily GEO health for yourbrand.com\nScore: *{{$node[\"Run GEO Audit\"].json[\"overall_score\"]}}*\nTop gap: {{$node[\"List Top 5 Gaps\"].json[\"actions\"][0][\"title\"]}}"
+      },
+      "id": "5",
+      "name": "Slack Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [1120, 220]
+    }
+  ],
+  "connections": {
+    "Daily 09:00 Cron": { "main": [[{ "node": "Run GEO Audit", "type": "main", "index": 0 }]] },
+    "Run GEO Audit": { "main": [[{ "node": "List Top 5 Gaps", "type": "main", "index": 0 }]] },
+    "List Top 5 Gaps": { "main": [[{ "node": "Notion: Log Score", "type": "main", "index": 0 }]] },
+    "Notion: Log Score": { "main": [[{ "node": "Slack Notify", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "geofixer", "aeo", "notion", "slack"]
+}
