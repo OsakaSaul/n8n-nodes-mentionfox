@@ -97,7 +97,7 @@ export const subjectFields: INodeProperties[] = [
 		name: 'company',
 		type: 'string',
 		default: '',
-		description: 'Disambiguation hint when name is ambiguous.',
+		description: 'Disambiguation hint when name is ambiguous',
 		displayOptions: { show: { resource: ['subject'], operation: ['vet_person'] } },
 	},
 
@@ -123,7 +123,7 @@ export const subjectFields: INodeProperties[] = [
 		name: 'refresh',
 		type: 'boolean',
 		default: false,
-		description: 'Whether to force a fresh enrichment instead of reading cache (charges 30cr).',
+		description: 'Whether to force a fresh enrichment instead of reading cache (charges 30cr)',
 		displayOptions: { show: { resource: ['subject'], operation: ['get_dossier'] } },
 	},
 
@@ -152,7 +152,7 @@ export const subjectFields: INodeProperties[] = [
 		name: 'context',
 		type: 'string',
 		default: '',
-		description: 'Optional context shaping the comparison framing (e.g. "investment targets", "speaker candidates").',
+		description: 'Optional context shaping the comparison framing (e.g. "investment targets", "speaker candidates")',
 		displayOptions: { show: { resource: ['subject'], operation: ['compare_subjects'] } },
 	},
 

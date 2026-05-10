@@ -25,19 +25,19 @@ export const chatOperations: INodeProperties[] = [
 			{
 				name: 'Send Message',
 				value: 'send_message',
-				description: 'STUB v0.1: pending FoxChat MCP tools.',
+				description: 'STUB v0.1: pending FoxChat MCP tools',
 				action: 'Send chat message',
 			},
 			{
 				name: 'Get History',
 				value: 'get_history',
-				description: 'STUB v0.1: pending FoxChat MCP tools.',
+				description: 'STUB v0.1: pending FoxChat MCP tools',
 				action: 'Get chat history',
 			},
 			{
 				name: 'Export Transcript',
 				value: 'export_transcript',
-				description: 'STUB v0.1: pending FoxChat MCP tools.',
+				description: 'STUB v0.1: pending FoxChat MCP tools',
 				action: 'Export transcript',
 			},
 		],

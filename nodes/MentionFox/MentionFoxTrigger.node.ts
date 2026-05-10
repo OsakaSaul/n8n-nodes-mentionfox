@@ -4,7 +4,6 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	IDataObject,
-	NodeConnectionType,
 } from 'n8n-workflow';
 
 import { mentionFoxMcpCall } from './GenericFunctions';
@@ -43,7 +42,7 @@ export class MentionFoxTrigger implements INodeType {
 		defaults: { name: 'MentionFox Trigger' },
 		polling: true,
 		inputs: [],
-		outputs: [NodeConnectionType.Main],
+		outputs: ['main'],
 		credentials: [{ name: 'mentionFoxApi', required: true }],
 		properties: [
 			{
@@ -52,11 +51,11 @@ export class MentionFoxTrigger implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
-					{ name: 'On New Mention', value: 'on_new_mention', description: 'Fires when a new mention matches the scoped query.' },
-					{ name: 'On New High-Intent Lead', value: 'on_new_high_intent_lead', description: 'Fires when scan turns up a mention scoring above intent threshold.' },
-					{ name: 'On GEO Score Drop', value: 'on_geo_score_drop', description: 'Fires when 7-day rolling GEO score drops by N or more points.' },
-					{ name: 'On New Battlecard Generated', value: 'on_new_battlecard_generated', description: 'STUB v0.1 — battlecard MCP tool pending.' },
 					{ name: 'On Crisis Signal Detected', value: 'on_crisis_signal_detected', description: 'Fires on crisis-keyword matches in mention scan. Recommended faster poll cadence.' },
+					{ name: 'On GEO Score Drop', value: 'on_geo_score_drop', description: 'Fires when 7-day rolling GEO score drops by N or more points' },
+					{ name: 'On New Battlecard Generated', value: 'on_new_battlecard_generated', description: 'STUB v0.1 — battlecard MCP tool pending' },
+					{ name: 'On New High-Intent Lead', value: 'on_new_high_intent_lead', description: 'Fires when scan turns up a mention scoring above intent threshold' },
+					{ name: 'On New Mention', value: 'on_new_mention', description: 'Fires when a new mention matches the scoped query' },
 				],
 				default: 'on_new_mention',
 			},
@@ -67,7 +66,7 @@ export class MentionFoxTrigger implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
-				description: 'Brand, topic, or person to monitor.',
+				description: 'Brand, topic, or person to monitor',
 				displayOptions: {
 					show: { triggerType: ['on_new_mention', 'on_new_high_intent_lead', 'on_crisis_signal_detected'] },
 				},

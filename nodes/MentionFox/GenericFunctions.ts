@@ -8,6 +8,7 @@ import {
 	IHttpRequestMethods,
 	NodeApiError,
 } from 'n8n-workflow';
+import type { JsonObject } from 'n8n-workflow';
 
 /**
  * Generic JSON-RPC 2.0 / MCP `tools/call` wrapper.
@@ -58,7 +59,7 @@ export async function mentionFoxMcpCall(
 	try {
 		response = (await this.helpers.httpRequest(options)) as IDataObject;
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error as IDataObject, {
+		throw new NodeApiError(this.getNode(), error as unknown as JsonObject, {
 			message: `MentionFox MCP request failed for tool "${toolName}"`,
 		});
 	}
@@ -66,7 +67,7 @@ export async function mentionFoxMcpCall(
 	// Wire-protocol error (auth, quota, rate-limit, unknown method).
 	if (response.error) {
 		const err = response.error as IDataObject;
-		throw new NodeApiError(this.getNode(), response, {
+		throw new NodeApiError(this.getNode(), response as unknown as JsonObject, {
 			message: `MentionFox tool "${toolName}" rejected: ${(err.message as string) || 'unknown error'}`,
 			description: err.data ? JSON.stringify(err.data) : undefined,
 			httpCode: err.code === -32001 ? '401' : err.code === -32002 ? '429' : undefined,
@@ -88,7 +89,7 @@ export async function mentionFoxMcpCall(
 	}
 
 	if (isError) {
-		throw new NodeApiError(this.getNode(), response, {
+		throw new NodeApiError(this.getNode(), response as unknown as JsonObject, {
 			message: `MentionFox tool "${toolName}" returned isError`,
 			description: text || 'Tool reported failure with no message.',
 		});

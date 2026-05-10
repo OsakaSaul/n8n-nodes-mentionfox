@@ -56,7 +56,7 @@ export const mentionFields: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		required: true,
-		description: 'Brand, topic, or person to scan for.',
+		description: 'Brand, topic, or person to scan for',
 		displayOptions: { show: { resource: ['mention'], operation: ['scan', 'score_intent'] } },
 	},
 	{
@@ -88,8 +88,11 @@ export const mentionFields: INodeProperties[] = [
 		displayName: 'Limit',
 		name: 'limit',
 		type: 'number',
-		typeOptions: { minValue: 1, maxValue: 50 },
-		default: 10,
+		typeOptions: {
+			minValue: 1,
+		},
+		description: 'Max number of results to return',
+		default: 50,
 		displayOptions: { show: { resource: ['mention'], operation: ['list_recent'] } },
 	},
 	{

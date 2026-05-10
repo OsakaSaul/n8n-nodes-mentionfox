@@ -19,10 +19,16 @@ export const geoFixerOperations: INodeProperties[] = [
 		displayOptions: { show: { resource: ['geoFixer'] } },
 		options: [
 			{
-				name: 'Run Audit',
-				value: 'run_audit',
-				description: 'Trigger a fresh GEO/AEO scan across ChatGPT, Gemini, Claude, Perplexity. FREE for paid GEOFixer subscribers.',
-				action: 'Run GEO audit',
+				name: 'Autopilot Status',
+				value: 'autopilot_status',
+				description: 'STUB v0.1: pending dedicated MCP tool. Returns "not implemented" structured payload.',
+				action: 'Get autopilot status',
+			},
+			{
+				name: 'Autopilot Toggle',
+				value: 'autopilot_toggle',
+				description: 'STUB v0.1: pending dedicated MCP tool. Returns "not implemented" structured payload.',
+				action: 'Toggle GEO autopilot',
 			},
 			{
 				name: 'Get Score',
@@ -37,16 +43,10 @@ export const geoFixerOperations: INodeProperties[] = [
 				action: 'List GEO improvement gaps',
 			},
 			{
-				name: 'Autopilot Status',
-				value: 'autopilot_status',
-				description: 'STUB v0.1: pending dedicated MCP tool. Returns "not implemented" structured payload.',
-				action: 'Get autopilot status',
-			},
-			{
-				name: 'Autopilot Toggle',
-				value: 'autopilot_toggle',
-				description: 'STUB v0.1: pending dedicated MCP tool. Returns "not implemented" structured payload.',
-				action: 'Toggle GEO autopilot',
+				name: 'Run Audit',
+				value: 'run_audit',
+				description: 'Trigger a fresh GEO/AEO scan across ChatGPT, Gemini, Claude, Perplexity. FREE for paid GEOFixer subscribers.',
+				action: 'Run GEO audit',
 			},
 		],
 		default: 'get_score',
@@ -73,7 +73,7 @@ export const geoFixerFields: INodeProperties[] = [
 		name: 'persona_id',
 		type: 'string',
 		default: '',
-		description: 'Restrict the breakdown to a single persona UUID.',
+		description: 'Restrict the breakdown to a single persona UUID',
 		displayOptions: { show: { resource: ['geoFixer'], operation: ['get_score'] } },
 	},
 	{
@@ -83,8 +83,8 @@ export const geoFixerFields: INodeProperties[] = [
 		options: [
 			{ name: 'All', value: '' },
 			{ name: 'ChatGPT', value: 'chatgpt' },
-			{ name: 'Gemini', value: 'gemini' },
 			{ name: 'Claude', value: 'claude' },
+			{ name: 'Gemini', value: 'gemini' },
 			{ name: 'Perplexity', value: 'perplexity' },
 		],
 		default: '',
@@ -111,8 +111,8 @@ export const geoFixerFields: INodeProperties[] = [
 		name: 'scan_depth',
 		type: 'options',
 		options: [
-			{ name: 'Light (~10 prompts × 4 LLMs)', value: 'light' },
-			{ name: 'Deep (~30 prompts × 4 LLMs)', value: 'deep' },
+			{ name: 'Light (~10 Prompts × 4 LLMs)', value: 'light' },
+			{ name: 'Deep (~30 Prompts × 4 LLMs)', value: 'deep' },
 		],
 		default: 'light',
 		displayOptions: { show: { resource: ['geoFixer'], operation: ['run_audit'] } },

@@ -24,19 +24,19 @@ export const denOperations: INodeProperties[] = [
 			{
 				name: 'Get Widget Data',
 				value: 'get_den_widget_data',
-				description: 'STUB v0.1: pending Den MCP tools.',
+				description: 'STUB v0.1: pending Den MCP tools',
 				action: 'Get den widget data',
 			},
 			{
 				name: 'Create Task',
 				value: 'create_den_task',
-				description: 'STUB v0.1: pending Den MCP tools.',
+				description: 'STUB v0.1: pending Den MCP tools',
 				action: 'Create a den task',
 			},
 			{
 				name: 'List Tasks',
 				value: 'list_den_tasks',
-				description: 'STUB v0.1: pending Den MCP tools.',
+				description: 'STUB v0.1: pending Den MCP tools',
 				action: 'List den tasks',
 			},
 		],
@@ -50,7 +50,7 @@ export const denFields: INodeProperties[] = [
 		name: 'persona',
 		type: 'string',
 		default: '',
-		description: 'Den persona slug — e.g. founder, recruiter, investor, journalist.',
+		description: 'Den persona slug — e.g. founder, recruiter, investor, journalist',
 		displayOptions: {
 			show: { resource: ['den'], operation: ['get_den_widget_data', 'create_den_task', 'list_den_tasks'] },
 		},
@@ -82,7 +82,7 @@ export const denFields: INodeProperties[] = [
 		name: 'source_url',
 		type: 'string',
 		default: '',
-		description: 'Origin of the task — FoxChat conversation URL, mention URL, etc.',
+		description: 'Origin of the task — FoxChat conversation URL, mention URL, etc',
 		displayOptions: { show: { resource: ['den'], operation: ['create_den_task'] } },
 	},
 ];

@@ -33,19 +33,19 @@ export const outreachOperations: INodeProperties[] = [
 			{
 				name: 'Send Sequence',
 				value: 'send_sequence',
-				description: 'STUB v0.1: pending MCP outreach tools.',
+				description: 'STUB v0.1: pending MCP outreach tools',
 				action: 'Send outreach sequence',
 			},
 			{
 				name: 'Get Sequence Status',
 				value: 'get_sequence_status',
-				description: 'STUB v0.1: pending MCP outreach tools.',
+				description: 'STUB v0.1: pending MCP outreach tools',
 				action: 'Get sequence status',
 			},
 			{
 				name: 'List Replies',
 				value: 'list_replies',
-				description: 'STUB v0.1: pending MCP outreach tools.',
+				description: 'STUB v0.1: pending MCP outreach tools',
 				action: 'List sequence replies',
 			},
 		],
@@ -73,7 +73,7 @@ export const outreachFields: INodeProperties[] = [
 		name: 'sequence_template',
 		type: 'string',
 		default: '',
-		description: 'Existing sequence template name in your MentionFox account.',
+		description: 'Existing sequence template name in your MentionFox account',
 		displayOptions: { show: { resource: ['outreach'], operation: ['build_sequence', 'send_sequence'] } },
 	},
 	{
@@ -82,7 +82,7 @@ export const outreachFields: INodeProperties[] = [
 		type: 'string',
 		typeOptions: { rows: 3 },
 		default: '',
-		description: 'Why you are reaching out — Reddit thread URL, mutual contact, conference, etc.',
+		description: 'Why you are reaching out — Reddit thread URL, mutual contact, conference, etc',
 		displayOptions: { show: { resource: ['outreach'], operation: ['build_sequence'] } },
 	},
 	{

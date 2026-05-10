@@ -64,7 +64,7 @@ export const leadFields: INodeProperties[] = [
 		name: 'person_id',
 		type: 'string',
 		default: '',
-		description: 'UUID lock-in after disambiguation.',
+		description: 'UUID lock-in after disambiguation',
 		displayOptions: {
 			show: { resource: ['lead'], operation: ['find_contact', 'enrich_person', 'score_lead'] },
 		},
@@ -74,7 +74,7 @@ export const leadFields: INodeProperties[] = [
 		name: 'company',
 		type: 'string',
 		default: '',
-		description: 'Company name or domain — disambiguation hint.',
+		description: 'Company name or domain — disambiguation hint',
 		displayOptions: {
 			show: { resource: ['lead'], operation: ['find_contact', 'enrich_person', 'score_lead'] },
 		},
@@ -107,7 +107,7 @@ export const leadFields: INodeProperties[] = [
 		name: 'source_context',
 		type: 'string',
 		default: '',
-		description: 'Where you found the lead — Reddit thread, LinkedIn post, conference, etc.',
+		description: 'Where you found the lead — Reddit thread, LinkedIn post, conference, etc',
 		displayOptions: { show: { resource: ['lead'], operation: ['push_to_dealflow'] } },
 	},
 	{

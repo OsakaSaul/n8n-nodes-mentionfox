@@ -20,13 +20,13 @@ export const clientOperations: INodeProperties[] = [
 			{
 				name: 'List Clients',
 				value: 'list_clients',
-				description: 'STUB v0.1: pending MCP tool.',
+				description: 'STUB v0.1: pending MCP tool',
 				action: 'List your agency clients',
 			},
 			{
 				name: 'Create Client',
 				value: 'create_client',
-				description: 'STUB v0.1: pending MCP tool.',
+				description: 'STUB v0.1: pending MCP tool',
 				action: 'Create a new client',
 			},
 			{
@@ -38,7 +38,7 @@ export const clientOperations: INodeProperties[] = [
 			{
 				name: 'List Battlecards',
 				value: 'list_client_battlecards',
-				description: 'STUB v0.1: pending MCP tool.',
+				description: 'STUB v0.1: pending MCP tool',
 				action: 'List client battlecards',
 			},
 		],

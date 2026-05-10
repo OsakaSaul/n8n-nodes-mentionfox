@@ -22,6 +22,7 @@ import {
 export class MentionFoxApi implements ICredentialType {
 	name = 'mentionFoxApi';
 	displayName = 'MentionFox API';
+	// eslint-disable-next-line n8n-nodes-base/cred-class-field-documentation-url-miscased
 	documentationUrl = 'https://www.mentionfox.com/help/n8n';
 	icon = 'file:mentionfox.svg' as const;
 
