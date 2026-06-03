@@ -1,10 +1,12 @@
-name: Test and Publish
+name: CI (lint, type-check, build)
+
+# Publishing moved to publish.yml (verified path: CI publish WITH provenance).
+# This workflow is CI only — it never publishes, so a non-provenance publish
+# can't accidentally fire on a tag.
 
 on:
   push:
     branches: [main]
-    tags:
-      - 'v*'
   pull_request:
     branches: [main]
 
@@ -27,24 +29,3 @@ jobs:
         run: npm run lint
       - name: Build (tsc + icons)
         run: npm run build
-
-  publish:
-    name: Publish to npm
-    needs: lint-and-build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-      - name: Install dependencies
-        run: npm ci || npm install
-      - name: Build
-        run: npm run build
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

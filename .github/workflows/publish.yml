@@ -1,0 +1,41 @@
+name: Publish (verified, with provenance)
+
+# n8n VERIFIED community nodes must be published from CI with an npm provenance
+# statement (post-2026-05-01 requirement) — a local `npm publish` is rejected.
+# This workflow publishes with --provenance, which requires `id-token: write`
+# so npm can mint the OIDC-signed provenance attestation on GitHub Actions.
+#
+# Trigger: publish a GitHub Release (recommended), or run manually.
+# Requires repo secret NPM_TOKEN = an npm Automation/Granular token with
+# publish rights, on an npm account with 2FA "auth-only" (not "auth-and-writes").
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # REQUIRED for npm provenance (OIDC)
+
+jobs:
+  publish:
+    name: Build + publish to npm with provenance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install dependencies
+        run: npm ci || npm install
+      - name: Lint
+        run: npm run lint
+      - name: Build (tsc + icons)
+        run: npm run build
+      - name: Publish to npm (provenance)
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
