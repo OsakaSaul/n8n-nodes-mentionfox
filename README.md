@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/n8n-nodes-mentionfox.svg)](https://www.npmjs.com/package/n8n-nodes-mentionfox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
-Community n8n node for [MentionFox](https://www.mentionfox.com) and FoxAPIs.
+Community n8n node for [MentionFox](https://mentionfox.com) and FoxAPIs.
 
 This package gives n8n workflows direct access to MentionFox's research, vetting, dossier, mention-scanning, lead-enrichment, and GEO/AEO scoring tools through the MentionFox MCP (Model Context Protocol) server.
 
@@ -12,7 +12,7 @@ This package gives n8n workflows direct access to MentionFox's research, vetting
 - **8 resources** with **30+ operations** in a single MentionFox node
 - **5 polling triggers** for new mentions, high-intent leads, GEO score drops, new battlecards, and crisis signals
 - **8 ready-to-import workflow templates** in `/templates/`
-- **JSON-RPC 2.0 / MCP transport** to `https://www.mentionfox.com/mcp`
+- **JSON-RPC 2.0 / MCP transport** to `https://mentionfox.com/mcp`
 - **Bearer-token credential** with built-in test endpoint (hits MCP `tools/list`)
 
 ## Installation
@@ -33,7 +33,7 @@ npm install n8n-nodes-mentionfox
 
 This node uses bearer-token authentication against the MentionFox MCP server.
 
-1. Visit https://www.mentionfox.com/connect
+1. Visit https://mentionfox.com/connect
 2. Sign in with your MentionFox account
 3. Copy the bearer access token (24-hour expiry; refresh via the same page)
 4. In n8n, create a new **MentionFox API** credential and paste the token
@@ -142,7 +142,7 @@ Disambiguation always returns a candidate list at zero credits — you only pay 
 
 ## Author
 
-Saul Fleischman / [MentionFox](https://www.mentionfox.com)
+Saul Fleischman / [MentionFox](https://mentionfox.com)
 
 ## Issues / contact
 

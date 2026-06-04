@@ -8,7 +8,7 @@ The operations exist as workflow slots so you can wire them now. Each call retur
 {
   "status": "stub_pending_mcp_tool",
   "tool": "outreach.build_sequence",
-  "dashboard_url": "https://www.mentionfox.com/dashboard/outreach",
+  "dashboard_url": "https://mentionfox.com/dashboard/outreach",
   "echo": { ... your input arguments ... }
 }
 ```

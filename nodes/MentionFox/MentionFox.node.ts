@@ -25,7 +25,7 @@ import { clientOperations, clientFields } from './descriptions/ClientDescription
  * Programmatic-style n8n node for MentionFox + FoxAPIs.
  *
  * Resources × Operations: 8 × ~4 = 30+ operations.
- * All operations transit the MentionFox MCP server at https://www.mentionfox.com/mcp
+ * All operations transit the MentionFox MCP server at https://mentionfox.com/mcp
  * via JSON-RPC 2.0 `tools/call`. Operations whose MCP tool is not yet shipped
  * fall through as structured stubs (status: 'stub_pending_mcp_tool') so workflow
  * authors can wire them now and the implementation flips on once tools land.
@@ -238,7 +238,7 @@ async function runMention(this: IExecuteFunctions, op: string, i: number): Promi
 	}
 	if (op === 'get_by_id') {
 		const mentionId = this.getNodeParameter('mention_id', i) as string;
-		return stubResponse('mention.get_by_id', { mention_id: mentionId }, 'https://www.mentionfox.com/dashboard/mentions');
+		return stubResponse('mention.get_by_id', { mention_id: mentionId }, 'https://mentionfox.com/dashboard/mentions');
 	}
 	throw new NodeOperationError(this.getNode(), `Unknown mention operation: ${op}`, { itemIndex: i });
 }
@@ -306,11 +306,11 @@ async function runGeoFixer(this: IExecuteFunctions, op: string, i: number): Prom
 		return mentionFoxMcpCall.call(this, 'get_geofixer_top_actions', { brand_domain: brandDomain, n });
 	}
 	if (op === 'autopilot_status') {
-		return stubResponse('geoFixer.autopilot_status', { brand_domain: brandDomain }, `https://www.mentionfox.com/dashboard/geofixer?brand=${encodeURIComponent(brandDomain)}`);
+		return stubResponse('geoFixer.autopilot_status', { brand_domain: brandDomain }, `https://mentionfox.com/dashboard/geofixer?brand=${encodeURIComponent(brandDomain)}`);
 	}
 	if (op === 'autopilot_toggle') {
 		const enabled = this.getNodeParameter('autopilot_enabled', i, false) as boolean;
-		return stubResponse('geoFixer.autopilot_toggle', { brand_domain: brandDomain, autopilot_enabled: enabled }, `https://www.mentionfox.com/dashboard/geofixer?brand=${encodeURIComponent(brandDomain)}`);
+		return stubResponse('geoFixer.autopilot_toggle', { brand_domain: brandDomain, autopilot_enabled: enabled }, `https://mentionfox.com/dashboard/geofixer?brand=${encodeURIComponent(brandDomain)}`);
 	}
 	throw new NodeOperationError(this.getNode(), `Unknown geoFixer operation: ${op}`, { itemIndex: i });
 }
@@ -328,7 +328,7 @@ async function runOutreach(this: IExecuteFunctions, op: string, i: number): Prom
 	} else {
 		args.sequence_id = this.getNodeParameter('sequence_id', i, '') as string;
 	}
-	return stubResponse(`outreach.${op}`, args, 'https://www.mentionfox.com/dashboard/outreach');
+	return stubResponse(`outreach.${op}`, args, 'https://mentionfox.com/dashboard/outreach');
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -345,7 +345,7 @@ async function runChat(this: IExecuteFunctions, op: string, i: number): Promise<
 	if (op === 'send_message') {
 		args.message = this.getNodeParameter('message', i, '') as string;
 	}
-	return stubResponse(`chat.${op}`, args, 'https://www.getfoxchat.com/dashboard');
+	return stubResponse(`chat.${op}`, args, 'https://getfoxchat.com/dashboard');
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -364,7 +364,7 @@ async function runDen(this: IExecuteFunctions, op: string, i: number): Promise<I
 		args.task_body = this.getNodeParameter('task_body', i, '') as string;
 		args.source_url = this.getNodeParameter('source_url', i, '') as string;
 	}
-	return stubResponse(`den.${op}`, args, 'https://www.mentionfox.com/dashboard/my-den');
+	return stubResponse(`den.${op}`, args, 'https://mentionfox.com/dashboard/my-den');
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -383,7 +383,7 @@ async function runClient(this: IExecuteFunctions, op: string, i: number): Promis
 	if (op === 'list_client_battlecards') {
 		args.client_domain = this.getNodeParameter('client_domain', i, '') as string;
 	}
-	return stubResponse(`client.${op}`, args, 'https://www.mentionfox.com/dashboard/clients');
+	return stubResponse(`client.${op}`, args, 'https://mentionfox.com/dashboard/clients');
 }
 
 // ──────────────────────────────────────────────────────────────────────

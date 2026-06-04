@@ -30,7 +30,7 @@ export async function mentionFoxMcpCall(
 	args: IDataObject,
 ): Promise<IDataObject> {
 	const credentials = await this.getCredentials('mentionFoxApi');
-	const baseUrl = (credentials.baseUrl as string) || 'https://www.mentionfox.com/mcp';
+	const baseUrl = (credentials.baseUrl as string) || 'https://mentionfox.com/mcp';
 	const token = credentials.apiKey as string;
 
 	const requestId = `n8n-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -108,7 +108,7 @@ export async function mentionFoxToolsList(
 	this: IExecuteFunctions | IHookFunctions | ILoadOptionsFunctions | IPollFunctions,
 ): Promise<IDataObject[]> {
 	const credentials = await this.getCredentials('mentionFoxApi');
-	const baseUrl = (credentials.baseUrl as string) || 'https://www.mentionfox.com/mcp';
+	const baseUrl = (credentials.baseUrl as string) || 'https://mentionfox.com/mcp';
 	const token = credentials.apiKey as string;
 
 	const options: IHttpRequestOptions = {

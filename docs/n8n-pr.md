@@ -26,7 +26,7 @@ Confirm:
 - The MentionFox node appears in the palette
 - The MentionFox Trigger node appears in the trigger picker
 - The credential `MentionFox API` is selectable
-- Credential test passes with a valid bearer token from https://www.mentionfox.com/connect
+- Credential test passes with a valid bearer token from https://mentionfox.com/connect
 - A simple `Subject` → `get_dossier` workflow returns data
 - Triggers fire on schedule
 

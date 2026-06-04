@@ -80,7 +80,7 @@ n8n start
 
 In n8n's UI:
 
-- Create a `MentionFox API` credential, paste a bearer token from https://www.mentionfox.com/connect, click "Test" — should pass.
+- Create a `MentionFox API` credential, paste a bearer token from https://mentionfox.com/connect, click "Test" — should pass.
 - Create a workflow with the MentionFox node → Subject → get_dossier on a known person.
 - Run, confirm output.
 

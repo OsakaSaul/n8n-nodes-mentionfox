@@ -9,8 +9,8 @@ import {
  * MentionFox API credential.
  *
  * Auth model (v0.1):
- *   The MentionFox MCP server (https://www.mentionfox.com/mcp) accepts a
- *   bearer access token issued via the OAuth flow at https://www.mentionfox.com/connect.
+ *   The MentionFox MCP server (https://mentionfox.com/mcp) accepts a
+ *   bearer access token issued via the OAuth flow at https://mentionfox.com/connect.
  *   For n8n we ask the user to paste the token directly. v1.1 will add a
  *   full OAuth grant flow inside the credential editor.
  *
@@ -23,7 +23,7 @@ export class MentionFoxApi implements ICredentialType {
 	name = 'mentionFoxApi';
 	displayName = 'MentionFox API';
 	// eslint-disable-next-line n8n-nodes-base/cred-class-field-documentation-url-miscased
-	documentationUrl = 'https://www.mentionfox.com/help/n8n';
+	documentationUrl = 'https://mentionfox.com/help/n8n';
 	icon = 'file:mentionfox.svg' as const;
 
 	properties: INodeProperties[] = [
@@ -35,13 +35,13 @@ export class MentionFoxApi implements ICredentialType {
 			default: '',
 			required: true,
 			description:
-				'Bearer access token from https://www.mentionfox.com/connect. v0.1 uses paste-token; v1.1 will add a full OAuth flow inside this credential.',
+				'Bearer access token from https://mentionfox.com/connect. v0.1 uses paste-token; v1.1 will add a full OAuth flow inside this credential.',
 		},
 		{
 			displayName: 'MCP Endpoint',
 			name: 'baseUrl',
 			type: 'string',
-			default: 'https://www.mentionfox.com/mcp',
+			default: 'https://mentionfox.com/mcp',
 			required: true,
 			description:
 				'MentionFox MCP server URL. Override only for staging or self-hosted deployments.',
@@ -81,7 +81,7 @@ export class MentionFoxApi implements ICredentialType {
 					key: 'result.tools',
 					value: undefined,
 					message:
-						'Token accepted but no tools list returned. Check that your token is valid at https://www.mentionfox.com/connect.',
+						'Token accepted but no tools list returned. Check that your token is valid at https://mentionfox.com/connect.',
 				},
 			},
 		],

@@ -4,4 +4,4 @@
 
 Operations: `start_session`, `send_message`, `get_history`, `export_transcript`.
 
-Each returns a `stub_pending_mcp_tool` payload pointing at the FoxChat dashboard at https://www.getfoxchat.com/dashboard.
+Each returns a `stub_pending_mcp_tool` payload pointing at the FoxChat dashboard at https://getfoxchat.com/dashboard.

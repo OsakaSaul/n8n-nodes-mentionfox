@@ -19,7 +19,7 @@
 
 ## Network
 
-- [x] HTTPS-only (`https://www.mentionfox.com/mcp`).
+- [x] HTTPS-only (`https://mentionfox.com/mcp`).
 - [x] Default endpoint cannot be changed without explicit credential edit.
 - [x] No third-party CDN / external script loading.
 

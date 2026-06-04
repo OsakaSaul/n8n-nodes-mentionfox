@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
   - On Crisis Signal Detected (keyword-matched scan)
 - 8 importable workflow templates in `/templates/`
 - MentionFox API credential with `tools/list` test endpoint
-- JSON-RPC 2.0 / MCP transport against `https://www.mentionfox.com/mcp`
+- JSON-RPC 2.0 / MCP transport against `https://mentionfox.com/mcp`
 - 9 SVG icons (one root + 8 resource glyphs) matching n8n design language
 - GitHub Actions CI: lint + type-check on every PR; npm publish on git tag
 - Per-resource documentation in `/docs/`

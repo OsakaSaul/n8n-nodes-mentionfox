@@ -18,11 +18,11 @@
     "journalism"
   ],
   "license": "MIT",
-  "homepage": "https://www.mentionfox.com",
+  "homepage": "https://mentionfox.com",
   "author": {
     "name": "Saul Fleischman",
     "email": "saul@mentionfox.com",
-    "url": "https://www.mentionfox.com"
+    "url": "https://mentionfox.com"
   },
   "repository": {
     "type": "git",
