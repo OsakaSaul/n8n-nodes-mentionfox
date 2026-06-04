@@ -20,28 +20,30 @@ import type { JsonObject } from 'n8n-workflow';
  * message in `content[0].text`.
  * Auth / quota / wire errors return JSON-RPC `error` with codes -32001 / -32002.
  *
+ * Auth: calls `httpRequestWithAuthentication('mentionFoxApi', …)` so the
+ * credential's `authenticate` block injects the Bearer token — no manual
+ * credential read / Authorization header (the n8n community-nodes ruleset
+ * forbids manual auth, and the helper gets future token-refresh / audit-logging).
+ *
  * Why we wrap and re-throw as NodeApiError: n8n surfaces NodeApiError with the
  * proper "Continue On Fail" semantics + a clean error UI. Treating MCP errors
  * as standard HTTP errors would lose the structured error code + upgrade_url.
  */
+const MCP_ENDPOINT = 'https://mentionfox.com/mcp';
+
 export async function mentionFoxMcpCall(
 	this: IExecuteFunctions | IHookFunctions | ILoadOptionsFunctions | IPollFunctions,
 	toolName: string,
 	args: IDataObject,
 ): Promise<IDataObject> {
-	const credentials = await this.getCredentials('mentionFoxApi');
-	const baseUrl = (credentials.baseUrl as string) || 'https://mentionfox.com/mcp';
-	const token = credentials.apiKey as string;
-
 	const requestId = `n8n-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 	const options: IHttpRequestOptions = {
 		method: 'POST' as IHttpRequestMethods,
-		url: baseUrl,
+		url: MCP_ENDPOINT,
 		headers: {
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
-			Authorization: `Bearer ${token}`,
 		},
 		body: {
 			jsonrpc: '2.0',
@@ -57,7 +59,11 @@ export async function mentionFoxMcpCall(
 
 	let response: IDataObject;
 	try {
-		response = (await this.helpers.httpRequest(options)) as IDataObject;
+		response = (await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'mentionFoxApi',
+			options,
+		)) as IDataObject;
 	} catch (error) {
 		throw new NodeApiError(this.getNode(), error as unknown as JsonObject, {
 			message: `MentionFox MCP request failed for tool "${toolName}"`,
@@ -107,17 +113,12 @@ export async function mentionFoxMcpCall(
 export async function mentionFoxToolsList(
 	this: IExecuteFunctions | IHookFunctions | ILoadOptionsFunctions | IPollFunctions,
 ): Promise<IDataObject[]> {
-	const credentials = await this.getCredentials('mentionFoxApi');
-	const baseUrl = (credentials.baseUrl as string) || 'https://mentionfox.com/mcp';
-	const token = credentials.apiKey as string;
-
 	const options: IHttpRequestOptions = {
 		method: 'POST' as IHttpRequestMethods,
-		url: baseUrl,
+		url: MCP_ENDPOINT,
 		headers: {
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
-			Authorization: `Bearer ${token}`,
 		},
 		body: {
 			jsonrpc: '2.0',
@@ -128,7 +129,11 @@ export async function mentionFoxToolsList(
 		json: true,
 	};
 
-	const response = (await this.helpers.httpRequest(options)) as IDataObject;
+	const response = (await this.helpers.httpRequestWithAuthentication.call(
+		this,
+		'mentionFoxApi',
+		options,
+	)) as IDataObject;
 	const result = (response.result as IDataObject) || {};
 	return ((result.tools as IDataObject[]) || []) as IDataObject[];
 }

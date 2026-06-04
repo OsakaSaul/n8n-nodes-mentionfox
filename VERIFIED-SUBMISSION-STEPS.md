@@ -1,11 +1,13 @@
 # n8n VERIFIED community node — remaining human steps
 
-Everything code/CI-side is done and pushed (commit on `main`: provenance `publish.yml`, CI-only `test-and-publish.yml`, version `0.1.1`). Build + lint pass. The official scanner (`@n8n/scan-community-package`) now fails on **one** thing only: *"Package was not published with npm provenance."* These steps fix that and submit. ~10–15 minutes.
+Everything code/CI-side is done and pushed (commit on `main`: provenance `publish.yml`, CI-only `test-and-publish.yml`, version `0.1.3`). Build + lint pass. The official scanner (`@n8n/scan-community-package`) now fails on **one** thing only: *"Package was not published with npm provenance."* These steps fix that and submit. ~10–15 minutes.
+
+> SCAN STATUS (2026-06-04): the @n8n/eslint-plugin-community-nodes content scan now PASSES on the packed tarball. Fixed in 0.1.3: GenericFunctions used this.helpers.httpRequest() with a manual Authorization header (rule no-http-request-with-manual-auth) → switched to httpRequestWithAuthentication. (The gulpfile path/gulp imports the scanner flags locally are NOT in the published tarball — files:["dist"] — so they are not real failures.) Provenance already passes on 0.1.2.
 
 ## What's already done (no action needed)
 - ✅ `.github/workflows/publish.yml` — publishes with `--provenance` + `id-token: write` (the post-2026-05-01 verified requirement).
 - ✅ `test-and-publish.yml` trimmed to CI-only (no non-provenance publish can fire).
-- ✅ `package.json` bumped to **0.1.1** (0.1.0 is already on npm without provenance; a fresh version is required to publish with provenance).
+- ✅ `package.json` bumped to **0.1.3** (0.1.0 is already on npm without provenance; a fresh version is required to publish with provenance).
 - ✅ `npm run build` exit 0, `npm run lint` exit 0.
 - ✅ Audit vs. verification rules: TypeScript ✓, n8n scaffolding conventions ✓, English-only interface/docs ✓. (Note: description says "MentionFox + FoxAPIs" — same vendor; the automated scan did not flag it, but if Creator-Portal human review objects to "one service per package," tighten the description to MentionFox only.)
 
@@ -18,10 +20,10 @@ Everything code/CI-side is done and pushed (commit on `main`: provenance `publis
 
 ## Step 2 — Trigger the provenance publish  (REQUIRED)
 Either:
-- **Recommended:** GitHub → **Releases → Draft a new release** → tag `v0.1.1` → Publish release. This fires `publish.yml`, which builds and runs `npm publish --provenance --access public`.
+- **Recommended:** GitHub → **Releases → Draft a new release** → tag `v0.1.3` → Publish release. This fires `publish.yml`, which builds and runs `npm publish --provenance --access public`.
 - **Or:** GitHub → **Actions → "Publish (verified, with provenance)" → Run workflow** (manual dispatch on `main`).
 
-Watch the Actions run go green. On success, npmjs.com/package/n8n-nodes-mentionfox will show a **"Provenance"** badge on v0.1.1.
+Watch the Actions run go green. On success, npmjs.com/package/n8n-nodes-mentionfox will show a **"Provenance"** badge on v0.1.3.
 
 ## Step 3 — Confirm the scan now passes  (optional but reassuring)
 Run (or have CC run): `npx @n8n/scan-community-package n8n-nodes-mentionfox`
