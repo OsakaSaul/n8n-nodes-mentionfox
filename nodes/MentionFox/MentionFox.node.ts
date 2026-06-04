@@ -55,14 +55,17 @@ export class MentionFox implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
-					{ name: 'Chat', value: 'chat', description: 'FoxChat sessions (stubs in v0.1)' },
-					{ name: 'Client', value: 'client', description: 'Agency client management' },
-					{ name: 'Den', value: 'den', description: 'FoxDen widgets + tasks (stubs in v0.1)' },
+					// HIDDEN until MCP v1.5: Chat / Den / Outreach are pure stubs; Client is
+					// mostly stub (its one live op, get_client_geo_score, is already covered by
+					// GEOFixer → Get Score). Handlers + descriptions kept so they re-add cleanly.
+					// { name: 'Chat', value: 'chat', description: 'FoxChat sessions (stubs in v0.1)' },
+					// { name: 'Client', value: 'client', description: 'Agency client management' },
+					// { name: 'Den', value: 'den', description: 'FoxDen widgets + tasks (stubs in v0.1)' },
 					{ name: 'GEOFixer', value: 'geoFixer', description: 'GEO/AEO scoring + audit + gaps' },
-					{ name: 'Lead', value: 'lead', description: 'Find / enrich / score / push to dealflow' },
-					{ name: 'Mention', value: 'mention', description: 'Scan platforms, list recent, score intent' },
-					{ name: 'Outreach', value: 'outreach', description: 'Sequences (stubs in v0.1)' },
-					{ name: 'Subject', value: 'subject', description: 'Vetting, dossiers, comparisons, influencer eval' },
+					{ name: 'Lead', value: 'lead', description: 'Find / enrich / push to dealflow' },
+					{ name: 'Mention', value: 'mention', description: 'Scan platforms, list recent' },
+					// { name: 'Outreach', value: 'outreach', description: 'Sequences (stubs in v0.1)' },
+					{ name: 'Subject', value: 'subject', description: 'Vetting, dossiers, comparisons' },
 				],
 				default: 'subject',
 			},

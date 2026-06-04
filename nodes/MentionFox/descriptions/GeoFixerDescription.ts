@@ -18,6 +18,7 @@ export const geoFixerOperations: INodeProperties[] = [
 		noDataExpression: true,
 		displayOptions: { show: { resource: ['geoFixer'] } },
 		options: [
+			/* HIDDEN until MCP v1.5 (stubs) — handlers kept in MentionFox.node.ts.
 			{
 				name: 'Autopilot Status',
 				value: 'autopilot_status',
@@ -30,6 +31,7 @@ export const geoFixerOperations: INodeProperties[] = [
 				description: 'STUB v0.1: pending dedicated MCP tool. Returns "not implemented" structured payload.',
 				action: 'Toggle GEO autopilot',
 			},
+			*/
 			{
 				name: 'Get Score',
 				value: 'get_score',

@@ -43,6 +43,7 @@ export const subjectOperations: INodeProperties[] = [
 					'Full multi-section dossier — 60+ sections of intel. 30 credits cold, FREE on cache hit.',
 				action: 'Get full dossier on a subject',
 			},
+			/* HIDDEN until MCP v1.5 (stub) — re-add after rerouting to the live evaluate_influencer tool. Handler kept in MentionFox.node.ts.
 			{
 				name: 'Evaluate Influencer',
 				value: 'evaluate_influencer',
@@ -50,6 +51,7 @@ export const subjectOperations: INodeProperties[] = [
 					'STUB v0.1: proxies to get_dossier with influencer-fit annotation. Dedicated influencer-eval tool pending MentionFox MCP v1.5.',
 				action: 'Evaluate influencer fit',
 			},
+			*/
 		],
 		default: 'get_dossier',
 	},

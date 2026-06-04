@@ -32,6 +32,7 @@ export const mentionOperations: INodeProperties[] = [
 				description: 'List recent research / mention activity for your account. FREE.',
 				action: 'List recent mentions',
 			},
+			/* HIDDEN until MCP v1.5 (stubs) — handlers kept in MentionFox.node.ts.
 			{
 				name: 'Score Intent',
 				value: 'score_intent',
@@ -44,6 +45,7 @@ export const mentionOperations: INodeProperties[] = [
 				description: 'STUB v0.1: pending dedicated MCP tool. Returns a structured "not implemented" payload for v0.1.',
 				action: 'Get mention by ID',
 			},
+			*/
 		],
 		default: 'scan',
 	},

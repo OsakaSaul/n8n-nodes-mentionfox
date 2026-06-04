@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-mentionfox",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "n8n community node for MentionFox + FoxAPIs - subject vetting, mention scanning, lead enrichment, GEOFixer, pipeline watch, dossiers, and journalism discovery via the MentionFox MCP server.",
   "keywords": [
     "n8n-community-node-package",

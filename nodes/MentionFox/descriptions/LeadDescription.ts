@@ -30,12 +30,14 @@ export const leadOperations: INodeProperties[] = [
 				description: 'Alias of find_contact. 5 credits.',
 				action: 'Enrich a person',
 			},
+			/* HIDDEN until MCP v1.5 (stub) — handler kept in MentionFox.node.ts.
 			{
 				name: 'Score Lead',
 				value: 'score_lead',
 				description: 'STUB v0.1: proxies to enrich_person and surfaces heuristic intent score. Pending dedicated tool.',
 				action: 'Score a lead',
 			},
+			*/
 			{
 				name: 'Push to Dealflow',
 				value: 'push_to_dealflow',
