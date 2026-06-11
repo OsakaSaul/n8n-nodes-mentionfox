@@ -52,7 +52,8 @@
     ],
     "nodes": [
       "dist/nodes/MentionFox/MentionFox.node.js",
-      "dist/nodes/MentionFox/MentionFoxTrigger.node.js"
+      "dist/nodes/MentionFox/MentionFoxTrigger.node.js",
+      "dist/nodes/MentionFox/MentionFoxWebhookTrigger.node.js"
     ]
   },
   "devDependencies": {
