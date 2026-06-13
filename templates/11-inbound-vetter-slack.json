@@ -1,0 +1,61 @@
+{
+  "name": "Vet Inbound Leads Before You Reply (Form to FoxAPIs to Slack)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-11-inbound-vetter-slack"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Talk to us",
+        "formDescription": "Tell us who you are and we'll get back to you.",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "Name", "requiredField": false },
+            { "fieldLabel": "Work Email", "requiredField": true },
+            { "fieldLabel": "Company", "requiredField": false }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Inbound Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "inbound-vetter-form"
+    },
+    {
+      "parameters": {
+        "name": "={{$json[\"Name\"]}}",
+        "email": "={{$json[\"Work Email\"]}}",
+        "company": "={{$json[\"Company\"]}}",
+        "mode": "light",
+        "includeCompany": true,
+        "sellerContext": "Vetting an inbound demo request for fit before a human replies."
+      },
+      "id": "2",
+      "name": "FoxAPIs: Inbound Vetter",
+      "type": "n8n-nodes-mentionfox.foxApisInboundVetter",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#inbound-leads",
+        "text": "=New inbound to vet: *{{$json[\"subject\"][\"name\"]}}* <{{$json[\"subject\"][\"email\"]}}>\n\nSeniority: {{$json[\"signals\"][\"seniority\"]}}  |  Title: {{$json[\"signals\"][\"title\"] || \"n/a\"}}\nVetting confidence: {{$json[\"vetting_confidence\"] != null ? $json[\"vetting_confidence\"] + \"/100\" : \"not scorable\"}}  ({{$json[\"recommended_action\"]}})\nIdentity confidence: {{$json[\"signals\"][\"identity_confidence\"] != null ? $json[\"signals\"][\"identity_confidence\"] : \"n/a\"}}  |  Email verified: {{$json[\"signals\"][\"email_verified\"]}}\nLinkedIn: {{$json[\"person\"][\"links\"][\"linkedin\"] || \"n/a\"}}\nCompany: {{$json[\"company_intel\"] ? ($json[\"company_intel\"][\"name\"] || $json[\"subject\"][\"domain\"]) : (\"(\" + ($json[\"company_leg_skipped\"] || \"no intel\") + \")\")}}\n{{$json[\"company_intel\"] && $json[\"company_intel\"][\"summary\"] ? $json[\"company_intel\"][\"summary\"] : \"\"}}"
+      },
+      "id": "3",
+      "name": "Slack: Vetting Summary",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Inbound Form": { "main": [[{ "node": "FoxAPIs: Inbound Vetter", "type": "main", "index": 0 }]] },
+    "FoxAPIs: Inbound Vetter": { "main": [[{ "node": "Slack: Vetting Summary", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["foxapis", "inbound", "vetting", "lead-qualification", "slack"]
+}

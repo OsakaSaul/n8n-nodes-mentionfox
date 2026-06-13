@@ -56,7 +56,8 @@
       "dist/nodes/MentionFox/MentionFoxTrigger.node.js",
       "dist/nodes/MentionFox/MentionFoxWebhookTrigger.node.js",
       "dist/nodes/FoxApis/FoxApis.node.js",
-      "dist/nodes/FoxApis/FoxApisLeadEnricher.node.js"
+      "dist/nodes/FoxApis/FoxApisLeadEnricher.node.js",
+      "dist/nodes/FoxApis/FoxApisInboundVetter.node.js"
     ]
   },
   "devDependencies": {
