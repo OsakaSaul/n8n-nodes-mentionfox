@@ -1,0 +1,66 @@
+{
+  "name": "Weekly AI-Visibility to Slack Digest (FoxAPIs)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "foxapis-09-weekly-ai-visibility"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1" }] }
+      },
+      "id": "1",
+      "name": "Weekly Mon 09:00 Cron",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "brand": "yourbrand.com",
+        "competitors": "competitor1.com, competitor2.com, competitor3.com",
+        "prompts": "best tool for X\nalternatives to competitor1",
+        "llms": ["chatgpt", "perplexity", "gemini", "grok"],
+        "includeGaps": true,
+        "includeCitationRate": false
+      },
+      "id": "2",
+      "name": "AI Visibility Monitor",
+      "type": "n8n-nodes-mentionfox.foxApis",
+      "typeVersion": 1,
+      "position": [480, 300],
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "jsValue": "const d = $json;\nconst perLlm = d.per_llm || {};\nconst lines = Object.keys(perLlm).map(name => {\n  const e = perLlm[name];\n  const flag = e.recommended === true ? ':white_check_mark:' : ':x:';\n  const rank = e.rank != null ? ` (rank ${e.rank})` : '';\n  return `${flag} *${name}*${rank}`;\n});\nconst header = d.slipped\n  ? `:rotating_light: *${d.brand}* is NOT recommended by any measured AI assistant.`\n  : d.overtaken\n    ? `:warning: *${d.brand}* was overtaken by a competitor in at least one AI assistant.`\n    : `:tada: *${d.brand}* is holding its AI-visibility position.`;\nconst sov = d.overall && d.overall.share_of_voice_pct != null\n  ? `\\nShare of voice: *${d.overall.share_of_voice_pct}%*`\n  : '';\nconst score = `\\nRecommended by *${(d.overall||{}).recommended_count||0}/${(d.overall||{}).llm_count||0}* assistants.`;\nconst gaps = Array.isArray(d.gaps) && d.gaps.length\n  ? `\\n\\n*Missing from prompts:*\\n` + d.gaps.slice(0,5).map(g => `• ${typeof g === 'string' ? g : (g.prompt || g.query || JSON.stringify(g))}`).join('\\n')\n  : '';\nreturn { digest: `${header}${score}${sov}\\n\\n${lines.join('\\n')}${gaps}`, slipped: d.slipped, overtaken: d.overtaken };"
+      },
+      "id": "3",
+      "name": "Format Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#ai-visibility",
+        "text": "={{$json[\"digest\"]}}"
+      },
+      "id": "4",
+      "name": "Slack Digest",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Weekly Mon 09:00 Cron": { "main": [[{ "node": "AI Visibility Monitor", "type": "main", "index": 0 }]] },
+    "AI Visibility Monitor": { "main": [[{ "node": "Format Digest", "type": "main", "index": 0 }]] },
+    "Format Digest": { "main": [[{ "node": "Slack Digest", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["foxapis", "geo", "aeo", "ai-visibility", "slack"]
+}

@@ -48,12 +48,14 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/MentionFoxApi.credentials.js"
+      "dist/credentials/MentionFoxApi.credentials.js",
+      "dist/credentials/FoxApisApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/MentionFox/MentionFox.node.js",
       "dist/nodes/MentionFox/MentionFoxTrigger.node.js",
-      "dist/nodes/MentionFox/MentionFoxWebhookTrigger.node.js"
+      "dist/nodes/MentionFox/MentionFoxWebhookTrigger.node.js",
+      "dist/nodes/FoxApis/FoxApis.node.js"
     ]
   },
   "devDependencies": {
