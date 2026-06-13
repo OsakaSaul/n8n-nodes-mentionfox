@@ -1,0 +1,74 @@
+{
+  "name": "Enrich New Lead Row → Append to Sheet (FoxAPIs)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "foxapis-10-enrich-new-sheet-lead"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "documentId": "REPLACE_WITH_SOURCE_SHEET_ID",
+        "sheetName": "Leads In",
+        "event": "rowAdded"
+      },
+      "id": "1",
+      "name": "New Lead Row",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "name": "={{$json[\"Name\"]}}",
+        "company": "={{$json[\"Company\"]}}",
+        "domain": "={{$json[\"Domain\"]}}",
+        "title": "={{$json[\"Title\"]}}",
+        "linkedinUrl": "={{$json[\"LinkedIn\"]}}",
+        "twitterHandle": "={{$json[\"Twitter\"]}}",
+        "mode": "light"
+      },
+      "id": "2",
+      "name": "Lead Enricher",
+      "type": "n8n-nodes-mentionfox.foxApisLeadEnricher",
+      "typeVersion": 1,
+      "position": [480, 300],
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "REPLACE_WITH_DESTINATION_SHEET_ID",
+        "sheetName": "Leads Enriched",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{$json[\"name\"]}}",
+            "Email": "={{$json[\"email\"]}}",
+            "Title": "={{$json[\"title\"]}}",
+            "Company": "={{$json[\"company\"]}}",
+            "LinkedIn": "={{$json[\"links\"][\"linkedin\"]}}",
+            "Twitter": "={{$json[\"links\"][\"twitter\"]}}",
+            "Confidence": "={{$json[\"confidence\"]}}",
+            "Verified": "={{$json[\"verified\"]}}",
+            "Found": "={{$json[\"found\"]}}"
+          }
+        }
+      },
+      "id": "3",
+      "name": "Append Enriched Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "New Lead Row": { "main": [[{ "node": "Lead Enricher", "type": "main", "index": 0 }]] },
+    "Lead Enricher": { "main": [[{ "node": "Append Enriched Row", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["foxapis", "enrichment", "lead-generation", "google-sheets"]
+}

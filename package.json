@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-mentionfox",
   "version": "0.1.3",
-  "description": "n8n community node for MentionFox + FoxAPIs - subject vetting, mention scanning, lead enrichment, GEOFixer, pipeline watch, dossiers, and journalism discovery via the MentionFox MCP server.",
+  "description": "n8n community nodes for MentionFox + FoxAPIs - subject vetting, mention scanning, AI-visibility monitoring, lead enrichment, GEOFixer, pipeline watch, dossiers, and journalism discovery.",
   "keywords": [
     "n8n-community-node-package",
     "mentionfox",
@@ -55,7 +55,8 @@
       "dist/nodes/MentionFox/MentionFox.node.js",
       "dist/nodes/MentionFox/MentionFoxTrigger.node.js",
       "dist/nodes/MentionFox/MentionFoxWebhookTrigger.node.js",
-      "dist/nodes/FoxApis/FoxApis.node.js"
+      "dist/nodes/FoxApis/FoxApis.node.js",
+      "dist/nodes/FoxApis/FoxApisLeadEnricher.node.js"
     ]
   },
   "devDependencies": {
