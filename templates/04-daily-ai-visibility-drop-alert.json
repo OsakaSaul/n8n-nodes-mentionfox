@@ -1,0 +1,103 @@
+{
+  "name": "Daily AI-Visibility Check → Score-Drop Alert",
+  "meta": { "templateId": "mentionfox-04-daily-ai-visibility-drop-alert" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 4 · Daily AI-Visibility Check → Score-Drop Alert\n\n**What it does:** Once a day, checks whether ChatGPT, Perplexity, Gemini and Grok recommend your brand vs competitors, compares the score to yesterday's run, and alerts Slack only when it **drops** (or when no AI recommends you, or a competitor overtakes you).\n\n**Setup**\n1. **Every Morning** → set the schedule.\n2. **Check AI Visibility** → set *Brand Domain* + comma-separated *Competitors*.\n3. **Compare vs Last Run** → no config; it stores the last score in workflow static data.\n4. **Slack** → channel.\n\n**Credentials & key**\n- **Check AI Visibility** → your **FoxAPIs API key** (`fxp_live_…`) from **foxapis.com**, spending **FoxAPIs credits**. Not a MentionFox connection token.\n\n**Credit cost per run:** geo check **30 cr** + share-of-voice **100 cr** (only when you list competitors). ~130 cr/day.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 520,
+        "width": 430,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-240, 40]
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "days", "triggerAtHour": 8 }] }
+      },
+      "id": "schedule",
+      "name": "Every Morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [300, 300],
+      "notes": "Fires daily at 08:00. Adjust to your timezone in workflow settings."
+    },
+    {
+      "parameters": {
+        "brand": "mentionfox.com",
+        "competitors": "brand24.com, mention.com, brandwatch.com",
+        "prompts": "best social listening tool\nalternatives to brandwatch",
+        "llms": ["chatgpt", "perplexity", "gemini", "grok"],
+        "includeGaps": false,
+        "includeCitationRate": false
+      },
+      "id": "visibility",
+      "name": "Check AI Visibility",
+      "type": "n8n-nodes-mentionfox.foxApis",
+      "typeVersion": 1,
+      "position": [560, 300],
+      "notes": "POST /v1/geo/check (+ /v1/geo/share-of-voice when competitors set). Returns overall.recommended_count, share_of_voice_pct, slipped, overtaken. FoxAPIs key. 30 cr + 100 cr for share-of-voice.",
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Visibility score = how many measured LLMs recommend us, plus share of voice.\nconst item = items[0].json;\nconst rec = (item.overall && item.overall.recommended_count) || 0;\nconst total = (item.overall && item.overall.llm_count) || 0;\nconst sov = (item.overall && item.overall.share_of_voice_pct) || 0;\nconst score = Math.round(rec * 20 + (sov || 0)); // simple, transparent blend\n\nconst store = $getWorkflowStaticData('global');\nconst prev = typeof store.lastVisibilityScore === 'number' ? store.lastVisibilityScore : null;\nstore.lastVisibilityScore = score;\n\nconst drop = prev === null ? 0 : prev - score;\nconst dropped = drop >= 1;           // any decrease vs last run\nconst slipped = item.slipped === true;     // recommended by NO LLM\nconst overtaken = item.overtaken === true; // a competitor leads\n\nreturn [{ json: {\n  brand: item.brand,\n  score,\n  previous_score: prev,\n  drop,\n  dropped,\n  slipped,\n  overtaken,\n  alert: dropped || slipped || overtaken,\n  recommended_count: rec,\n  llm_count: total,\n  share_of_voice_pct: sov,\n  checked_at: item.checked_at,\n} }];"
+      },
+      "id": "compare",
+      "name": "Compare vs Last Run",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 300],
+      "notes": "Stores last score in workflow static data and computes the day-over-day drop. Sets alert=true on any drop / slip / overtake."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "combinator": "and",
+          "conditions": [
+            { "id": "c1", "leftValue": "={{$json[\"alert\"]}}", "rightValue": true, "operator": { "type": "boolean", "operation": "true", "singleValue": true } }
+          ]
+        }
+      },
+      "id": "if",
+      "name": "Score Dropped?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1080, 300],
+      "notes": "Only continue to Slack when alert=true. No alert on a flat or improving day."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": { "__rl": true, "value": "REPLACE_WITH_SLACK_CHANNEL_ID", "mode": "id" },
+        "text": "=:chart_with_downwards_trend: *AI-visibility alert for {{$json[\"brand\"]}}*\nScore {{$json[\"previous_score\"]}} → {{$json[\"score\"]}} (drop {{$json[\"drop\"]}})\nRecommended by {{$json[\"recommended_count\"]}}/{{$json[\"llm_count\"]}} AI engines · Share of voice {{$json[\"share_of_voice_pct\"]}}%\n{{$json[\"slipped\"] ? \":rotating_light: No AI engine recommends you right now.\" : \"\"}} {{$json[\"overtaken\"] ? \":crossed_swords: A competitor is now ahead.\" : \"\"}}",
+        "otherOptions": {}
+      },
+      "id": "slack",
+      "name": "Alert Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1340, 220],
+      "notes": "Fires only on a drop. Alert only — no automated remediation.",
+      "credentials": {
+        "slackApi": { "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID", "name": "Slack account" }
+      }
+    }
+  ],
+  "connections": {
+    "Every Morning": { "main": [[{ "node": "Check AI Visibility", "type": "main", "index": 0 }]] },
+    "Check AI Visibility": { "main": [[{ "node": "Compare vs Last Run", "type": "main", "index": 0 }]] },
+    "Compare vs Last Run": { "main": [[{ "node": "Score Dropped?", "type": "main", "index": 0 }]] },
+    "Score Dropped?": { "main": [[{ "node": "Alert Slack", "type": "main", "index": 0 }], []] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["foxapis", "geo", "ai-visibility", "slack", "monitoring"]
+}

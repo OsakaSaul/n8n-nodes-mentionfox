@@ -1,0 +1,141 @@
+{
+  "name": "Mention → Enrich → Fit Score → Route Hot Leads",
+  "meta": { "templateId": "mentionfox-09-mention-enrich-fit-score-route-hot" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 9 · Mention → Enrich → Fit Score → Route Hot Leads\n\n**What it does:** Each new mention's author is enriched, scored for fit (seniority + identity confidence + verified email), then routed: hot leads go to a **Hot** tab, everyone else to an **All** tab.\n\n**Setup**\n1. **New Mention** → set *Topic*.\n2. **Enrich Author** → FoxAPIs key.\n3. **Fit Score** → tune the weights/threshold if you like.\n4. **Hot / All Leads** → point both Sheets nodes at your spreadsheet (tabs `Hot` and `All`).\n\n**Credentials & key**\n- Mention scan → **MentionFox connection token** (mentionfox.com/connect).\n- **Enrich Author** → your **FoxAPIs API key** (`fxp_live_…`) from **foxapis.com**, spending **FoxAPIs credits**. Not a MentionFox connection token.\n\n**Credit cost per mention:** scan 3 cr/source + enrich **100 cr Light**.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 520,
+        "width": 430,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-260, 20]
+    },
+    {
+      "parameters": {
+        "triggerType": "on_new_mention",
+        "topic": "MentionFox",
+        "sources": "",
+        "hours_back": 2
+      },
+      "id": "trigger",
+      "name": "New Mention",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [300, 320],
+      "notes": "Emits new, deduped mentions. MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{$json[\"author\"] || $json[\"author_name\"] || $json[\"author_handle\"]}}",
+        "twitterHandle": "={{$json[\"author_handle\"] || \"\"}}",
+        "mode": "light"
+      },
+      "id": "enrich",
+      "name": "Enrich Author",
+      "type": "n8n-nodes-mentionfox.foxApisLeadEnricher",
+      "typeVersion": 1,
+      "position": [560, 320],
+      "notes": "POST /v1/enrich_person. FoxAPIs key. 100 cr Light.",
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transparent fit score from REAL enrichment fields only.\nconst p = items[0].json || {};\nconst title = (p.title || '').toLowerCase();\nlet seniority = 0;\nif (/(founder|owner|ceo|cto|cfo|coo|chief|president|vp|head of|director)/.test(title)) seniority = 40;\nelse if (/(manager|lead|principal|staff)/.test(title)) seniority = 25;\nelse if (title) seniority = 10;\nconst idConf = typeof p.identity_confidence === 'number' ? p.identity_confidence : 0; // 0-100\nconst conf = typeof p.confidence === 'number' ? p.confidence : 0; // 0-1\nconst emailBonus = p.verified === true ? 15 : (p.email ? 5 : 0);\nconst fit_score = Math.max(0, Math.min(100, Math.round(seniority + idConf * 0.3 + conf * 100 * 0.15 + emailBonus)));\nconst hot = fit_score >= 60 && p.found === true;\nreturn [{ json: { ...p, fit_score, hot } }];"
+      },
+      "id": "score",
+      "name": "Fit Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 320],
+      "notes": "fit_score = seniority + 0.3*identity_confidence + 0.15*(confidence*100) + email bonus. hot = score>=60 and a real profile resolved."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "combinator": "and",
+          "conditions": [
+            { "id": "c1", "leftValue": "={{$json[\"hot\"]}}", "rightValue": true, "operator": { "type": "boolean", "operation": "true", "singleValue": true } }
+          ]
+        }
+      },
+      "id": "if",
+      "name": "Hot Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1080, 320],
+      "notes": "True branch → Hot tab. False branch → All tab."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Hot", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{$json[\"name\"]}}",
+            "Title": "={{$json[\"title\"]}}",
+            "Company": "={{$json[\"company\"]}}",
+            "Email": "={{$json[\"email\"]}}",
+            "Fit Score": "={{$json[\"fit_score\"]}}"
+          }
+        }
+      },
+      "id": "hotsheet",
+      "name": "Hot Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1360, 220],
+      "notes": "Appends high-fit leads to the Hot tab.",
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_GOOGLE_CREDENTIAL_ID", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "All", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{$json[\"name\"]}}",
+            "Title": "={{$json[\"title\"]}}",
+            "Company": "={{$json[\"company\"]}}",
+            "Email": "={{$json[\"email\"]}}",
+            "Fit Score": "={{$json[\"fit_score\"]}}"
+          }
+        }
+      },
+      "id": "allsheet",
+      "name": "All Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1360, 420],
+      "notes": "Appends everyone else to the All tab.",
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_GOOGLE_CREDENTIAL_ID", "name": "Google Sheets account" }
+      }
+    }
+  ],
+  "connections": {
+    "New Mention": { "main": [[{ "node": "Enrich Author", "type": "main", "index": 0 }]] },
+    "Enrich Author": { "main": [[{ "node": "Fit Score", "type": "main", "index": 0 }]] },
+    "Fit Score": { "main": [[{ "node": "Hot Lead?", "type": "main", "index": 0 }]] },
+    "Hot Lead?": { "main": [[{ "node": "Hot Leads", "type": "main", "index": 0 }], [{ "node": "All Leads", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "foxapis", "enrichment", "lead-scoring", "google-sheets"]
+}

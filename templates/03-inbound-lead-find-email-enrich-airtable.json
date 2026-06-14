@@ -1,0 +1,102 @@
+{
+  "name": "Inbound Lead Webhook → Find Email + Enrich → Airtable",
+  "meta": { "templateId": "mentionfox-03-inbound-lead-find-email-enrich-airtable" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 3 · Inbound Lead Webhook → Find Email + Enrich → Airtable\n\n**What it does:** A form/CRM/site POSTs a new lead (name + company domain). The flow finds a verified work email, enriches the person, and writes one row to Airtable (a Google Sheet works the same way — swap the last node).\n\n**Setup**\n1. **Lead Webhook** → copy the Production URL into your form/CRM/Zapier/site. Expects JSON `{ name, website }` (website = company domain).\n2. **Find Email** & **Enrich Person** → your FoxAPIs key.\n3. **Upsert to Airtable** → pick Base + Table.\n\n**Credentials & key**\n- **Find Email** + **Enrich Person** → your **FoxAPIs API key** (`fxp_live_…`) from **foxapis.com**, spending **FoxAPIs credits**. Not a MentionFox connection token.\n\n**Credit cost per lead:** find email **100 cr on a match (0 cr if no email)** + enrich **100 cr Light**. Budget ~200 cr per fully-resolved lead.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 540,
+        "width": 430,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-220, 40]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "inbound-lead",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [320, 300],
+      "webhookId": "inbound-lead-find-email",
+      "notes": "POST JSON: { \"name\": \"Jane Doe\", \"website\": \"acme.com\" }. Copy the Production URL into your form/CRM."
+    },
+    {
+      "parameters": {
+        "website": "={{$json[\"body\"][\"website\"] || $json[\"website\"]}}",
+        "name": "={{$json[\"body\"][\"name\"] || $json[\"name\"]}}"
+      },
+      "id": "findemail",
+      "name": "Find Email",
+      "type": "n8n-nodes-mentionfox.foxApisFindEmail",
+      "typeVersion": 1,
+      "position": [600, 300],
+      "notes": "POST /v1/find_email {website, name}. FoxAPIs key. 100 cr on a match, 0 cr when no email is found.",
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{$json[\"name\"]}}",
+        "domain": "={{$json[\"website\"]}}",
+        "mode": "light"
+      },
+      "id": "enrich",
+      "name": "Enrich Person",
+      "type": "n8n-nodes-mentionfox.foxApisLeadEnricher",
+      "typeVersion": 1,
+      "position": [880, 300],
+      "notes": "POST /v1/enrich_person — adds title, company, links, identity confidence. FoxAPIs key. 100 cr Light.",
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": { "__rl": true, "value": "REPLACE_WITH_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "REPLACE_WITH_AIRTABLE_TABLE_ID", "mode": "id" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{$json[\"name\"]}}",
+            "Email": "={{$node[\"Find Email\"].json[\"email\"] || $json[\"email\"]}}",
+            "Title": "={{$json[\"title\"]}}",
+            "Company": "={{$json[\"company\"]}}",
+            "LinkedIn": "={{$json[\"links\"][\"linkedin\"]}}",
+            "Email Verified": "={{$node[\"Find Email\"].json[\"verified\"]}}",
+            "Confidence": "={{$json[\"confidence\"]}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "airtable",
+      "name": "Upsert to Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [1160, 300],
+      "notes": "Writes one enriched lead row. Swap for Google Sheets if you prefer.",
+      "credentials": {
+        "airtableTokenApi": { "id": "REPLACE_WITH_AIRTABLE_CREDENTIAL_ID", "name": "Airtable Personal Access Token" }
+      }
+    }
+  ],
+  "connections": {
+    "Lead Webhook": { "main": [[{ "node": "Find Email", "type": "main", "index": 0 }]] },
+    "Find Email": { "main": [[{ "node": "Enrich Person", "type": "main", "index": 0 }]] },
+    "Enrich Person": { "main": [[{ "node": "Upsert to Airtable", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["foxapis", "enrichment", "find-email", "lead-generation", "airtable", "webhook"]
+}

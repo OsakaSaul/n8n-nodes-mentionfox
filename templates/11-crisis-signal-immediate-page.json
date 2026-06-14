@@ -1,0 +1,78 @@
+{
+  "name": "Crisis Signal → Immediate Slack + Discord Page",
+  "meta": { "templateId": "mentionfox-11-crisis-signal-immediate-page" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 11 · Crisis Signal → Immediate Slack + Discord Page (bonus)\n\n**What it does:** Polls mentions on a fast cadence and fires the moment one contains a crisis keyword (lawsuit, outage, breach, scandal, layoff, bankruptcy…). It pages both Slack and Discord so the on-call sees it instantly.\n\n**Setup**\n1. **Crisis Watch** → set *Topic* (your brand) and edit *Crisis Keywords*. Use a short poll interval (e.g. 5 min) in Trigger settings.\n2. **Slack** + **Discord** → set channel / webhook.\n\n**Credentials & key**\n- Crisis scan → **MentionFox connection token** (mentionfox.com/connect).\n- (Paid FoxAPIs nodes elsewhere use your **FoxAPIs API key** from **foxapis.com** — never a MentionFox connection token.)\n\n**Credit cost:** scan **3 cr per source** per poll — a fast cadence on many sources adds up, so scope *Sources* tightly.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 500,
+        "width": 430,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-240, 40]
+    },
+    {
+      "parameters": {
+        "triggerType": "on_crisis_signal_detected",
+        "topic": "MentionFox",
+        "sources": "twitter,reddit,hackernews",
+        "hours_back": 1,
+        "crisis_keywords": "lawsuit,outage,breach,scandal,layoff,bankruptcy,down,hacked"
+      },
+      "id": "trigger",
+      "name": "Crisis Watch",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [320, 300],
+      "notes": "Fires only on mentions containing a crisis keyword. Set a short poll interval. MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": { "__rl": true, "value": "REPLACE_WITH_SLACK_CHANNEL_ID", "mode": "id" },
+        "text": "=:rotating_light: *CRISIS SIGNAL* — keywords: {{ ($json[\"crisis_keywords_matched\"]||[]).join(', ') }}\n>{{ ($json[\"content\"] || \"\").slice(0,280) }}\n{{$json[\"source_url\"] || $json[\"url\"] || \"\"}}",
+        "otherOptions": {}
+      },
+      "id": "slack",
+      "name": "Page Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [620, 220],
+      "notes": "Immediate Slack page. Alert only.",
+      "credentials": {
+        "slackApi": { "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID", "name": "Slack account" }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "resource": "message",
+        "operation": "sendLegacy",
+        "content": "=:rotating_light: CRISIS SIGNAL ({{ ($json[\"crisis_keywords_matched\"]||[]).join(', ') }})\n{{ ($json[\"content\"] || \"\").slice(0,280) }}\n{{$json[\"source_url\"] || $json[\"url\"] || \"\"}}",
+        "options": {}
+      },
+      "id": "discord",
+      "name": "Page Discord",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [620, 380],
+      "notes": "Immediate Discord page via a channel webhook. Add a Discord Webhook credential with your webhook URL.",
+      "credentials": {
+        "discordWebhookApi": { "id": "REPLACE_WITH_DISCORD_WEBHOOK_CREDENTIAL_ID", "name": "Discord Webhook" }
+      }
+    }
+  ],
+  "connections": {
+    "Crisis Watch": { "main": [[{ "node": "Page Slack", "type": "main", "index": 0 }, { "node": "Page Discord", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "crisis", "slack", "discord", "alerts"]
+}

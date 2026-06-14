@@ -1,0 +1,92 @@
+{
+  "name": "Competitor Mention → Vet Company → Slack Digest",
+  "meta": { "templateId": "mentionfox-05-competitor-mention-vet-company-digest" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 5 · Competitor Mention → Vet Company → Slack Digest\n\n**What it does:** Watches for mentions of a *competitor* (someone shopping around). For each one it vets the person/company behind the mention (enrichment + company intel + a derived seniority/confidence read), batches them, and posts one digest to Slack.\n\n**Setup**\n1. **Competitor Mention** → set *Topic* to a competitor name/handle.\n2. **Vet Author / Company** → set a *Seller / Vetting Context* line; FoxAPIs key.\n3. **Build Digest** → no config (combines the poll's items).\n4. **Slack** → channel.\n\n**Credentials & key**\n- Mention scan → **MentionFox connection token** (mentionfox.com/connect).\n- **Vet Author / Company** → your **FoxAPIs API key** (`fxp_live_…`) from **foxapis.com**, spending **FoxAPIs credits**. Not a MentionFox connection token.\n\n**Credit cost per mention:** scan 3 cr/source + vet = enrich **100 cr** + company dossier **30 cr** (only when a work domain is present).\n\nPricing: https://mentionfox.com/pricing",
+        "height": 540,
+        "width": 430,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-240, 40]
+    },
+    {
+      "parameters": {
+        "triggerType": "on_new_mention",
+        "topic": "Brandwatch",
+        "sources": "reddit,twitter,hackernews",
+        "hours_back": 6
+      },
+      "id": "trigger",
+      "name": "Competitor Mention",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [320, 300],
+      "notes": "Set Topic to a competitor. Emits new, deduped mentions. MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{$json[\"author\"] || $json[\"author_name\"] || $json[\"author_handle\"]}}",
+        "email": "={{$json[\"author_email\"] || \"\"}}",
+        "company": "={{$json[\"author_company\"] || \"\"}}",
+        "mode": "light",
+        "includeCompany": true,
+        "sellerContext": "We sell social listening + AI-visibility tooling; vet inbound interest from people evaluating competitors."
+      },
+      "id": "vet",
+      "name": "Vet Author / Company",
+      "type": "n8n-nodes-mentionfox.foxApisInboundVetter",
+      "typeVersion": 1,
+      "position": [620, 300],
+      "notes": "POST /v1/enrich_person (person leg) + POST /v1/generate_sales_dossier (company leg, only when a work domain is present). Returns derived seniority + vetting_confidence + recommended_action. FoxAPIs key.",
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "aggregate",
+      "name": "Build Digest",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "notes": "Combines all vetted mentions from this poll into a single item for one Slack digest message."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": { "__rl": true, "value": "REPLACE_WITH_SLACK_CHANNEL_ID", "mode": "id" },
+        "text": "=:satellite: *Competitor-mention digest* — {{$json[\"data\"].length}} new\n{{ $json[\"data\"].map(d => `• ${d.subject?.name || 'unknown'} (${d.signals?.seniority || 'n/a'}, conf ${d.vetting_confidence ?? 'n/a'}) — ${d.recommended_action || ''}`).join('\\n') }}",
+        "otherOptions": {}
+      },
+      "id": "slack",
+      "name": "Post Digest",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1180, 300],
+      "notes": "One digest message per poll. Intel only — no outreach is sent.",
+      "credentials": {
+        "slackApi": { "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID", "name": "Slack account" }
+      }
+    }
+  ],
+  "connections": {
+    "Competitor Mention": { "main": [[{ "node": "Vet Author / Company", "type": "main", "index": 0 }]] },
+    "Vet Author / Company": { "main": [[{ "node": "Build Digest", "type": "main", "index": 0 }]] },
+    "Build Digest": { "main": [[{ "node": "Post Digest", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "foxapis", "competitive-intel", "vetting", "slack"]
+}

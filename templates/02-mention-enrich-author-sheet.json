@@ -1,0 +1,89 @@
+{
+  "name": "Mention → Enrich Author → Google Sheet Lead List",
+  "meta": { "templateId": "mentionfox-02-mention-enrich-author-sheet" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 2 · Mention → Enrich Author → Google Sheet\n\n**What it does:** Every new mention of your brand/topic gets its author resolved to a real person (title, company, verified email, social links) and appended as a lead row in Google Sheets.\n\n**Setup**\n1. **New Mention** → set *Topic*.\n2. **Enrich Author** → no config needed; it reads the author from the mention.\n3. **Append Lead Row** → pick your Sheet + tab and map columns.\n\n**Credentials & key**\n- Mention scan → **MentionFox connection token** (mentionfox.com/connect).\n- **Enrich Author** → your **FoxAPIs API key** (`fxp_live_…`) from **foxapis.com**. Spends **FoxAPIs credits**, not a MentionFox connection token.\n\n**Credit cost per mention:** scan 3 cr/source + enrich **100 cr (Light)** / 150 cr (Deep). Enrich returns `found:false` cheaply when the author can't be resolved.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 520,
+        "width": 420,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, 60]
+    },
+    {
+      "parameters": {
+        "triggerType": "on_new_mention",
+        "topic": "MentionFox",
+        "sources": "",
+        "hours_back": 1
+      },
+      "id": "trigger",
+      "name": "New Mention",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [320, 300],
+      "notes": "Emits each new, deduped mention. Uses the MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{$json[\"author\"] || $json[\"author_name\"] || $json[\"author_handle\"]}}",
+        "twitterHandle": "={{$json[\"author_handle\"] || \"\"}}",
+        "mode": "light"
+      },
+      "id": "enrich",
+      "name": "Enrich Author",
+      "type": "n8n-nodes-mentionfox.foxApisLeadEnricher",
+      "typeVersion": 1,
+      "position": [620, 300],
+      "notes": "POST /v1/enrich_person — resolves the mention author to a verified contact. FoxAPIs API key. 100 cr Light / 150 cr Deep.",
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Leads", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{$json[\"name\"]}}",
+            "Title": "={{$json[\"title\"]}}",
+            "Company": "={{$json[\"company\"]}}",
+            "Email": "={{$json[\"email\"]}}",
+            "Verified": "={{$json[\"verified\"]}}",
+            "LinkedIn": "={{$json[\"links\"][\"linkedin\"]}}",
+            "Twitter": "={{$json[\"links\"][\"twitter\"]}}",
+            "Confidence": "={{$json[\"confidence\"]}}",
+            "Found": "={{$json[\"found\"]}}"
+          }
+        }
+      },
+      "id": "sheet",
+      "name": "Append Lead Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [920, 300],
+      "notes": "Appends the enriched author as a lead row. Pick your destination Sheet + tab.",
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_GOOGLE_CREDENTIAL_ID", "name": "Google Sheets account" }
+      }
+    }
+  ],
+  "connections": {
+    "New Mention": { "main": [[{ "node": "Enrich Author", "type": "main", "index": 0 }]] },
+    "Enrich Author": { "main": [[{ "node": "Append Lead Row", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "foxapis", "enrichment", "lead-generation", "google-sheets"]
+}

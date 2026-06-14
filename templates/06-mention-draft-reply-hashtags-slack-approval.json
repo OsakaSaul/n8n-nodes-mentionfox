@@ -1,0 +1,115 @@
+{
+  "name": "Mention → Draft Reply + RiteKit Hashtags → Slack Approval",
+  "meta": { "templateId": "mentionfox-06-mention-draft-reply-hashtags-slack-approval" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 6 · Mention → Draft Reply + RiteKit Hashtags → Slack Approval\n\n**What it does:** For each new mention it drafts a reply, asks **RiteKit** for relevant hashtags, and posts the *draft* to Slack for a human to approve and post manually. **Nothing is auto-posted.**\n\n**Setup**\n1. **New Mention** → set *Topic*.\n2. **RiteKit Hashtags** → add a **Generic / Query Auth** credential named *RiteKit Client ID* with **Name = `client_id`**, **Value = your RiteKit client_id**. (Verified endpoint: `GET https://api.ritekit.com/v1/stats/hashtag-suggestions?text=…&client_id=…`.)\n3. **Slack** → channel where your team approves drafts.\n\n**Credentials & key**\n- Mention scan → **MentionFox connection token** (mentionfox.com/connect).\n- Hashtags → a **separate RiteKit client_id** credential (from your RiteKit account) — billed on your RiteKit plan, *not* FoxAPIs credits.\n- (Other templates' paid data nodes use your **FoxAPIs API key** from **foxapis.com** — never a MentionFox connection token.)\n\n**Credit cost per mention:** scan 3 cr/source. Hashtags are billed by RiteKit. No FoxAPIs credits used here.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 560,
+        "width": 440,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-260, 20]
+    },
+    {
+      "parameters": {
+        "triggerType": "on_new_mention",
+        "topic": "MentionFox",
+        "sources": "twitter,reddit",
+        "hours_back": 1
+      },
+      "id": "trigger",
+      "name": "New Mention",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [320, 300],
+      "notes": "Emits new, deduped mentions. MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "draft_reply", "value": "=Hi {{$json[\"author_handle\"] || \"there\"}} — thanks for mentioning this! Happy to help — here's how we'd approach it: …", "type": "string" },
+            { "id": "a2", "name": "topic_text", "value": "={{ ($json[\"content\"] || \"\").slice(0, 200) }}", "type": "string" },
+            { "id": "a3", "name": "source_url", "value": "={{$json[\"source_url\"] || $json[\"url\"] || \"\"}}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "draft",
+      "name": "Draft Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [600, 300],
+      "notes": "Writes a starter reply. Edit the template text or swap in your own LLM node — but keep it a DRAFT for human review."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.ritekit.com/v1/stats/hashtag-suggestions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "text", "value": "={{$json[\"topic_text\"]}}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ritekit",
+      "name": "RiteKit Hashtags",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 300],
+      "notes": "VERIFIED RiteKit endpoint: GET https://api.ritekit.com/v1/stats/hashtag-suggestions?text=…&client_id=… . The Query Auth credential supplies client_id. Billed by RiteKit, not FoxAPIs.",
+      "credentials": {
+        "httpQueryAuth": { "id": "REPLACE_WITH_RITEKIT_QUERYAUTH_CREDENTIAL_ID", "name": "RiteKit Client ID" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// RiteKit hashtag-suggestions returns tags under data/result; read defensively.\nconst r = items[0].json || {};\nconst pool = r.data || r.result || r.tags || r;\nlet tags = [];\nif (Array.isArray(pool)) tags = pool;\nelse if (pool && Array.isArray(pool.tags)) tags = pool.tags;\nelse if (pool && Array.isArray(pool.hashtags)) tags = pool.hashtags;\nconst names = tags.map(t => (typeof t === 'string' ? t : (t.tag || t.hashtag || t.name || ''))).filter(Boolean).slice(0, 8);\nconst hashtags = names.map(n => (n.startsWith('#') ? n : '#' + n)).join(' ');\nreturn [{ json: { ...items[0].json, hashtags, hashtag_list: names } }];"
+      },
+      "id": "compose",
+      "name": "Compose Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 300],
+      "notes": "Normalises RiteKit's response into a clean hashtag string and appends it to the draft."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": { "__rl": true, "value": "REPLACE_WITH_SLACK_CHANNEL_ID", "mode": "id" },
+        "text": "=:pencil: *Draft reply — approve before posting (not auto-posted)*\n*Mention:* {{$json[\"topic_text\"]}}\n*Link:* {{$json[\"source_url\"]}}\n\n*Suggested reply:*\n{{$json[\"draft_reply\"]}}\n\n*Hashtags:* {{$json[\"hashtags\"]}}",
+        "otherOptions": {}
+      },
+      "id": "slack",
+      "name": "Send for Approval",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1440, 300],
+      "notes": "Posts the DRAFT for a human to copy, edit and post manually. No social auto-post anywhere in this flow.",
+      "credentials": {
+        "slackApi": { "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID", "name": "Slack account" }
+      }
+    }
+  ],
+  "connections": {
+    "New Mention": { "main": [[{ "node": "Draft Reply", "type": "main", "index": 0 }]] },
+    "Draft Reply": { "main": [[{ "node": "RiteKit Hashtags", "type": "main", "index": 0 }]] },
+    "RiteKit Hashtags": { "main": [[{ "node": "Compose Draft", "type": "main", "index": 0 }]] },
+    "Compose Draft": { "main": [[{ "node": "Send for Approval", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "ritekit", "social-drafting", "slack", "approval"]
+}

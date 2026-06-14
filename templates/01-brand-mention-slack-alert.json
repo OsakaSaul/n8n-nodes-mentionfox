@@ -1,0 +1,59 @@
+{
+  "name": "Brand Mention → Slack Alert",
+  "meta": { "templateId": "mentionfox-01-brand-mention-slack-alert" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 1 · Brand Mention → Slack Alert\n\n**What it does:** Polls the web for fresh mentions of your brand/topic across 50+ platforms and posts each NEW one to a Slack channel. Deduped — you never get the same mention twice.\n\n**Setup**\n1. **MentionFox Trigger** → set *Topic* to your brand and pick a poll cadence (Trigger settings → Poll Times).\n2. **Slack** → connect your Slack credential and choose the channel.\n3. Activate the workflow.\n\n**Credentials & key**\n- The mention scan uses your **MentionFox connection token** (paste it into the *MentionFox API* credential — get it at **mentionfox.com/connect**).\n- The paid FoxAPIs data nodes in the other templates authenticate with your **FoxAPIs API key** (`fxp_live_…`) from **foxapis.com**, which spends **FoxAPIs credits**. That is *not* a MentionFox connection token.\n\n**Credit cost:** mention scan = **3 FoxAPIs-equivalent credits per source** scanned per poll. Narrow *Sources* (e.g. `reddit,twitter,hackernews`) to control spend. Slack is free.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 520,
+        "width": 420,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-180, 80]
+    },
+    {
+      "parameters": {
+        "triggerType": "on_new_mention",
+        "topic": "MentionFox",
+        "sources": "reddit,twitter,hackernews,producthunt",
+        "hours_back": 1
+      },
+      "id": "trigger",
+      "name": "New Mention",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [320, 300],
+      "notes": "Polls scan_for_mentions and emits only mentions not seen before (dedupe by source_url). Set Topic to your brand. Uses the MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": { "__rl": true, "value": "REPLACE_WITH_SLACK_CHANNEL_ID", "mode": "id" },
+        "text": "=:mega: *New {{$json[\"source_platform\"] || \"web\"}} mention*\n>{{ ($json[\"content\"] || \"\").slice(0, 280) }}\n{{$json[\"source_url\"] || $json[\"url\"] || \"\"}}\nSentiment: {{$json[\"sentiment\"] || \"n/a\"}} · Author: {{$json[\"author\"] || $json[\"author_handle\"] || \"unknown\"}}",
+        "otherOptions": {}
+      },
+      "id": "slack",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [620, 300],
+      "notes": "One Slack message per new mention. No auto-reply — this is an alert only.",
+      "credentials": {
+        "slackApi": { "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID", "name": "Slack account" }
+      }
+    }
+  ],
+  "connections": {
+    "New Mention": { "main": [[{ "node": "Post to Slack", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "foxapis", "social-listening", "slack", "alerts"]
+}

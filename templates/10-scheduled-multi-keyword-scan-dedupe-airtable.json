@@ -1,0 +1,118 @@
+{
+  "name": "Scheduled Multi-Keyword Scan → Dedupe → Airtable",
+  "meta": { "templateId": "mentionfox-10-scheduled-multi-keyword-scan-dedupe-airtable" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 10 · Scheduled Multi-Keyword Scan → Dedupe → Airtable\n\n**What it does:** On a schedule, scans for several keywords/brands in one run, flattens the results, removes anything already seen (deduped across runs), and writes new mentions to Airtable.\n\n**Setup**\n1. **Every Few Hours** → set cadence.\n2. **Keywords** → edit the list in the Code node.\n3. **Scan Keyword** → MentionFox connection token; narrow *Sources* to control spend.\n4. **Save New to Airtable** → pick Base + Table.\n\n**Credentials & key**\n- Scan → **MentionFox connection token** (mentionfox.com/connect).\n- (Paid FoxAPIs nodes elsewhere use your **FoxAPIs API key** from **foxapis.com** — never a MentionFox connection token.)\n\n**Credit cost per run:** scan **3 cr per source × number of keywords**. e.g. 3 keywords × 4 sources = 36 cr/run. Fewer sources / keywords = lower spend.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 540,
+        "width": 440,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-280, 20]
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 6 }] }
+      },
+      "id": "schedule",
+      "name": "Every Few Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [280, 320],
+      "notes": "Runs every 6 hours."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Edit this list — one item per keyword/brand to scan.\nconst keywords = ['MentionFox', 'FoxAPIs', 'social listening n8n'];\nreturn keywords.map(k => ({ json: { keyword: k } }));"
+      },
+      "id": "keywords",
+      "name": "Keywords",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 320],
+      "notes": "One item per keyword. The Scan node runs once per item."
+    },
+    {
+      "parameters": {
+        "resource": "mention",
+        "operation": "scan",
+        "topic": "={{$json[\"keyword\"]}}",
+        "sources": "reddit,twitter,hackernews,producthunt",
+        "hours_back": 24
+      },
+      "id": "scan",
+      "name": "Scan Keyword",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [760, 320],
+      "notes": "Calls scan_for_mentions per keyword. 3 cr per source. MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Flatten every scan response to one item per mention.\nconst out = [];\nfor (const it of items) {\n  const r = it.json || {};\n  const arr = r.mentions || r.results || r.items || [];\n  for (const m of arr) out.push({ json: m });\n}\nreturn out;"
+      },
+      "id": "extract",
+      "name": "Flatten Mentions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 320],
+      "notes": "Merges all keywords' results into a single mention stream."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dedupe across runs using workflow static data (cap the memory at 2000 urls).\nconst store = $getWorkflowStaticData('global');\nconst seen = new Set(store.seenUrls || []);\nconst fresh = [];\nfor (const it of items) {\n  const m = it.json || {};\n  const key = m.source_url || m.url || `${m.source_platform}:${m.found_at}:${(m.content||'').slice(0,60)}`;\n  if (!seen.has(key)) { seen.add(key); fresh.push({ json: m }); }\n}\nstore.seenUrls = Array.from(seen).slice(-2000);\nreturn fresh;"
+      },
+      "id": "dedupe",
+      "name": "Dedupe (across runs)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1240, 320],
+      "notes": "Drops any mention seen in a previous run. Keeps the last 2000 URLs in static data."
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": { "__rl": true, "value": "REPLACE_WITH_AIRTABLE_BASE_ID", "mode": "id" },
+        "table": { "__rl": true, "value": "REPLACE_WITH_AIRTABLE_TABLE_ID", "mode": "id" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Platform": "={{$json[\"source_platform\"] || $json[\"platform\"] || \"\"}}",
+            "Author": "={{$json[\"author\"] || $json[\"author_handle\"] || \"\"}}",
+            "Excerpt": "={{ ($json[\"content\"] || \"\").slice(0,200) }}",
+            "Sentiment": "={{$json[\"sentiment\"] || \"\"}}",
+            "URL": "={{$json[\"source_url\"] || $json[\"url\"] || \"\"}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "airtable",
+      "name": "Save New to Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [1480, 320],
+      "notes": "Writes only the new, deduped mentions.",
+      "credentials": {
+        "airtableTokenApi": { "id": "REPLACE_WITH_AIRTABLE_CREDENTIAL_ID", "name": "Airtable Personal Access Token" }
+      }
+    }
+  ],
+  "connections": {
+    "Every Few Hours": { "main": [[{ "node": "Keywords", "type": "main", "index": 0 }]] },
+    "Keywords": { "main": [[{ "node": "Scan Keyword", "type": "main", "index": 0 }]] },
+    "Scan Keyword": { "main": [[{ "node": "Flatten Mentions", "type": "main", "index": 0 }]] },
+    "Flatten Mentions": { "main": [[{ "node": "Dedupe (across runs)", "type": "main", "index": 0 }]] },
+    "Dedupe (across runs)": { "main": [[{ "node": "Save New to Airtable", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "social-listening", "dedupe", "airtable", "scheduled"]
+}

@@ -1,0 +1,94 @@
+{
+  "name": "High-Follower Author → Enrich → Priority Ping",
+  "meta": { "templateId": "mentionfox-07-high-follower-author-enrich-priority-ping" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 7 · High-Follower Author → Enrich → Priority Ping\n\n**What it does:** Watches mentions, but only acts when the author has a big audience (set your follower floor). Those get enriched and trigger a priority Slack ping so you respond fast to influential voices.\n\n**Setup**\n1. **New Mention** → set *Topic*.\n2. **Big Audience?** → set the follower threshold (default 5,000).\n3. **Enrich Author** → FoxAPIs key.\n4. **Slack** → a high-priority channel.\n\n**Credentials & key**\n- Mention scan → **MentionFox connection token** (mentionfox.com/connect).\n- **Enrich Author** → your **FoxAPIs API key** (`fxp_live_…`) from **foxapis.com**, spending **FoxAPIs credits**. Not a MentionFox connection token.\n\n**Credit cost:** scan 3 cr/source per poll. Enrich (**100 cr**) runs *only* for high-follower authors — the filter keeps spend low.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 520,
+        "width": 430,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-240, 40]
+    },
+    {
+      "parameters": {
+        "triggerType": "on_new_mention",
+        "topic": "MentionFox",
+        "sources": "twitter,youtube,tiktok",
+        "hours_back": 2
+      },
+      "id": "trigger",
+      "name": "New Mention",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [320, 300],
+      "notes": "Emits new, deduped mentions. MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "combinator": "or",
+          "conditions": [
+            { "id": "c1", "leftValue": "={{ $json[\"author_followers\"] || $json[\"author_follower_count\"] || $json[\"followers\"] || 0 }}", "rightValue": 5000, "operator": { "type": "number", "operation": "gte" } }
+          ]
+        }
+      },
+      "id": "if",
+      "name": "Big Audience?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [600, 300],
+      "notes": "Passes only authors at/over the follower floor. Reads whichever follower field the source provided."
+    },
+    {
+      "parameters": {
+        "name": "={{$json[\"author\"] || $json[\"author_name\"] || $json[\"author_handle\"]}}",
+        "twitterHandle": "={{$json[\"author_handle\"] || \"\"}}",
+        "mode": "deep"
+      },
+      "id": "enrich",
+      "name": "Enrich Author",
+      "type": "n8n-nodes-mentionfox.foxApisLeadEnricher",
+      "typeVersion": 1,
+      "position": [880, 220],
+      "notes": "POST /v1/enrich_person in Deep mode for a full profile on an influential author. FoxAPIs key. 150 cr Deep (set mode=light for 100 cr).",
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": { "__rl": true, "value": "REPLACE_WITH_SLACK_CHANNEL_ID", "mode": "id" },
+        "text": "=:fire: *Priority: influential mention*\n*{{$json[\"name\"]}}* — {{$json[\"title\"]}} @ {{$json[\"company\"]}}\nEmail: {{$json[\"email\"] || \"—\"}} · LinkedIn: {{$json[\"links\"][\"linkedin\"] || \"—\"}}\nRespond fast — this author has a large audience.",
+        "otherOptions": {}
+      },
+      "id": "slack",
+      "name": "Priority Ping",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1160, 220],
+      "notes": "High-priority ping with the enriched author. Alert only.",
+      "credentials": {
+        "slackApi": { "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID", "name": "Slack account" }
+      }
+    }
+  ],
+  "connections": {
+    "New Mention": { "main": [[{ "node": "Big Audience?", "type": "main", "index": 0 }]] },
+    "Big Audience?": { "main": [[{ "node": "Enrich Author", "type": "main", "index": 0 }], []] },
+    "Enrich Author": { "main": [[{ "node": "Priority Ping", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "foxapis", "enrichment", "influencer", "slack"]
+}

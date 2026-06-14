@@ -1,0 +1,118 @@
+{
+  "name": "Inbound Applicant/Lead Vetter → Slack Approval Card",
+  "meta": { "templateId": "mentionfox-12-inbound-applicant-vetter-slack-approval" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 12 · Inbound Applicant/Lead Vetter → Slack Approval Card (bonus)\n\n**What it does:** An inbound form (applicant, demo request, cold reply) submits name + email. The flow vets the person + their company and posts a Slack **approval card** with a derived seniority + confidence read and a recommended action. A human decides — nothing is auto-replied.\n\n**Setup**\n1. **Inbound Form** → share the form URL, or swap for a Webhook from your ATS/CRM.\n2. **Vet Inbound** → FoxAPIs key; set your *Seller / Vetting Context*.\n3. **Strong Fit?** → routes high-confidence vs needs-review to two Slack messages.\n\n**Credentials & key**\n- **Vet Inbound** → your **FoxAPIs API key** (`fxp_live_…`) from **foxapis.com**, spending **FoxAPIs credits**. Not a MentionFox connection token.\n\n**Credit cost per inbound:** enrich **100 cr** + company dossier **30 cr** (only when a work-email domain is present). Free-webmail addresses skip the company leg.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 540,
+        "width": 440,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-280, 20]
+    },
+    {
+      "parameters": {
+        "formTitle": "Talk to us",
+        "formDescription": "Tell us who you are and we'll get back to you.",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "Name", "requiredField": true },
+            { "fieldLabel": "Work Email", "requiredField": true },
+            { "fieldLabel": "Company", "requiredField": false }
+          ]
+        },
+        "options": {}
+      },
+      "id": "form",
+      "name": "Inbound Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [320, 300],
+      "webhookId": "inbound-applicant-vetter",
+      "notes": "Public form. Swap for a Webhook node to read from your ATS/CRM instead."
+    },
+    {
+      "parameters": {
+        "name": "={{$json[\"Name\"]}}",
+        "email": "={{$json[\"Work Email\"]}}",
+        "company": "={{$json[\"Company\"]}}",
+        "mode": "light",
+        "includeCompany": true,
+        "sellerContext": "B2B SaaS — vet inbound demo requests and applicants for fit before a human replies."
+      },
+      "id": "vet",
+      "name": "Vet Inbound",
+      "type": "n8n-nodes-mentionfox.foxApisInboundVetter",
+      "typeVersion": 1,
+      "position": [600, 300],
+      "notes": "POST /v1/enrich_person + POST /v1/generate_sales_dossier (when a work domain is present). Returns derived seniority, vetting_confidence and recommended_action. FoxAPIs key.",
+      "credentials": {
+        "foxApisApi": { "id": "REPLACE_WITH_FOXAPIS_CREDENTIAL_ID", "name": "FoxAPIs API" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "combinator": "and",
+          "conditions": [
+            { "id": "c1", "leftValue": "={{$json[\"recommended_action\"]}}", "rightValue": "high_confidence_engage", "operator": { "type": "string", "operation": "equals" } }
+          ]
+        }
+      },
+      "id": "if",
+      "name": "Strong Fit?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 300],
+      "notes": "Routes high_confidence_engage to the fast-track card; everything else to the review card."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": { "__rl": true, "value": "REPLACE_WITH_SLACK_CHANNEL_ID", "mode": "id" },
+        "text": "=:white_check_mark: *Strong inbound — approve to engage*\n*{{$json[\"subject\"][\"name\"]}}* — {{$json[\"person\"][\"title\"]}} @ {{$json[\"person\"][\"company\"]}}\nSeniority: {{$json[\"signals\"][\"seniority\"]}} · Confidence: {{$json[\"vetting_confidence\"]}}/100 · Email verified: {{$json[\"signals\"][\"email_verified\"]}}\nRecommended: *{{$json[\"recommended_action\"]}}*\n_Approve here, then reply manually — no auto-send._",
+        "otherOptions": {}
+      },
+      "id": "slackhot",
+      "name": "Approval Card",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1160, 220],
+      "notes": "High-confidence approval card. Human approves; reply is sent manually.",
+      "credentials": {
+        "slackApi": { "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID", "name": "Slack account" }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": { "__rl": true, "value": "REPLACE_WITH_SLACK_CHANNEL_ID", "mode": "id" },
+        "text": "=:mag: *Inbound needs review*\n*{{$json[\"subject\"][\"name\"]}}* — {{$json[\"person\"][\"title\"] || \"title unknown\"}} @ {{$json[\"person\"][\"company\"] || \"company unknown\"}}\nSeniority: {{$json[\"signals\"][\"seniority\"]}} · Confidence: {{$json[\"vetting_confidence\"] ?? \"n/a\"}}/100\nRecommended: {{$json[\"recommended_action\"]}}",
+        "otherOptions": {}
+      },
+      "id": "slackreview",
+      "name": "Review Card",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1160, 380],
+      "notes": "Lower-confidence review card. Human decides whether to engage.",
+      "credentials": {
+        "slackApi": { "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID", "name": "Slack account" }
+      }
+    }
+  ],
+  "connections": {
+    "Inbound Form": { "main": [[{ "node": "Vet Inbound", "type": "main", "index": 0 }]] },
+    "Vet Inbound": { "main": [[{ "node": "Strong Fit?", "type": "main", "index": 0 }]] },
+    "Strong Fit?": { "main": [[{ "node": "Approval Card", "type": "main", "index": 0 }], [{ "node": "Review Card", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["foxapis", "vetting", "inbound", "slack", "approval"]
+}

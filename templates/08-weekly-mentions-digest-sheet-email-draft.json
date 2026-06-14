@@ -1,0 +1,122 @@
+{
+  "name": "Weekly Mentions Digest → Sheet + Email Draft",
+  "meta": { "templateId": "mentionfox-08-weekly-mentions-digest-sheet-email-draft" },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 8 · Weekly Mentions Digest → Sheet + Email Draft\n\n**What it does:** Once a week it pulls your recent mention activity, appends every mention to a tracking Sheet, and writes a summary **Gmail draft** for you to review and send. **The email is a draft — never auto-sent.**\n\n**Setup**\n1. **Every Monday** → set the weekly schedule.\n2. **List Recent Mentions** → uses the MentionFox connection token (this op is FREE).\n3. **Log to Sheet** → pick Sheet + tab.\n4. **Weekly Email Draft** → set the To/Subject; it saves a Gmail draft.\n\n**Credentials & key**\n- Mention listing → **MentionFox connection token** (mentionfox.com/connect).\n- (Paid FoxAPIs nodes elsewhere use your **FoxAPIs API key** from **foxapis.com** — never a MentionFox connection token.)\n\n**Credit cost:** *List Recent* is **FREE** (0 credits). Sheet + Gmail draft are free.\n\nPricing: https://mentionfox.com/pricing",
+        "height": 520,
+        "width": 430,
+        "color": 7
+      },
+      "id": "sticky-setup",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-260, 40]
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "weeks", "triggerAtDay": [1], "triggerAtHour": 9 }] }
+      },
+      "id": "schedule",
+      "name": "Every Monday",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [300, 320],
+      "notes": "Runs weekly, Monday 09:00."
+    },
+    {
+      "parameters": {
+        "resource": "mention",
+        "operation": "list_recent",
+        "limit": 100
+      },
+      "id": "listrecent",
+      "name": "List Recent Mentions",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [560, 320],
+      "notes": "Calls get_my_recent_research (FREE). Returns recent mention/research activity for your account. MentionFox connection token.",
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pull an array of mentions out of the list_recent response, defensively.\nconst r = items[0].json || {};\nconst arr = r.mentions || r.results || r.items || r.data || (Array.isArray(r) ? r : []);\nreturn (arr || []).map(m => ({ json: m }));"
+      },
+      "id": "extract",
+      "name": "Extract Mentions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 220],
+      "notes": "One item per mention for the Sheet."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Weekly Mentions", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{$json[\"found_at\"] || $json[\"created_at\"] || \"\"}}",
+            "Platform": "={{$json[\"source_platform\"] || $json[\"platform\"] || \"\"}}",
+            "Author": "={{$json[\"author\"] || $json[\"author_handle\"] || \"\"}}",
+            "Sentiment": "={{$json[\"sentiment\"] || \"\"}}",
+            "Excerpt": "={{ ($json[\"content\"] || \"\").slice(0,200) }}",
+            "URL": "={{$json[\"source_url\"] || $json[\"url\"] || \"\"}}"
+          }
+        }
+      },
+      "id": "sheet",
+      "name": "Log to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1080, 220],
+      "notes": "Appends every mention to the weekly tracking tab.",
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_GOOGLE_CREDENTIAL_ID", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a plain-text weekly summary for the email draft.\nconst r = items[0].json || {};\nconst arr = r.mentions || r.results || r.items || r.data || [];\nconst total = arr.length;\nconst byPlatform = {};\nfor (const m of arr) { const p = m.source_platform || m.platform || 'other'; byPlatform[p] = (byPlatform[p]||0)+1; }\nconst lines = Object.entries(byPlatform).map(([p,c]) => `  • ${p}: ${c}`).join('\\n');\nconst top = arr.slice(0,10).map(m => `- [${m.source_platform||'web'}] ${(m.content||'').slice(0,120)} ${m.source_url||m.url||''}`).join('\\n');\nconst body = `Weekly mentions digest\\n\\nTotal mentions: ${total}\\nBy platform:\\n${lines}\\n\\nMost recent:\\n${top}\\n`;\nreturn [{ json: { total, body } }];"
+      },
+      "id": "summary",
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 420],
+      "notes": "Aggregates counts + a top-10 list into an email body."
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Weekly mentions digest — {{$json[\"total\"]}} new",
+        "emailType": "text",
+        "message": "={{$json[\"body\"]}}",
+        "options": {}
+      },
+      "id": "gmail",
+      "name": "Weekly Email Draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1080, 420],
+      "notes": "Creates a Gmail DRAFT (resource = Draft). It is never auto-sent — review and send manually.",
+      "credentials": {
+        "gmailOAuth2": { "id": "REPLACE_WITH_GMAIL_CREDENTIAL_ID", "name": "Gmail account" }
+      }
+    }
+  ],
+  "connections": {
+    "Every Monday": { "main": [[{ "node": "List Recent Mentions", "type": "main", "index": 0 }]] },
+    "List Recent Mentions": { "main": [[{ "node": "Extract Mentions", "type": "main", "index": 0 }, { "node": "Build Summary", "type": "main", "index": 0 }]] },
+    "Extract Mentions": { "main": [[{ "node": "Log to Sheet", "type": "main", "index": 0 }]] },
+    "Build Summary": { "main": [[{ "node": "Weekly Email Draft", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "digest", "google-sheets", "gmail", "draft"]
+}

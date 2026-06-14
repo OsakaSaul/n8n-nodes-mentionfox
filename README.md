@@ -15,14 +15,14 @@ Get alerted the moment your brand, a competitor, or a buying-intent keyword is m
 - **FoxAPIs: Inbound Vetter** — email / domain / name → person enrichment + company intel + derived seniority/confidence signals, before you reply.
 - **FoxAPIs: AI Visibility Monitor** — is your brand recommended by AI assistants vs competitors, per assistant, with share-of-voice and gaps.
 - **MentionFox node** — on-demand mention scanning across 50+ platforms, subject vetting, dossiers, comparisons, and GEO/AEO scoring (8 resources, 30+ operations) over the MentionFox MCP server.
-- **14 ready-to-import workflow templates** in `/templates/`.
+- **12 ready-to-import workflow templates** in `/templates/`.
 
 ## Features
 
 - **6 nodes**: 1 polling trigger node (5 trigger types) + 5 action nodes
 - **MentionFox node**: 8 resources with 30+ operations over JSON-RPC 2.0 / MCP (`https://mentionfox.com/mcp`)
 - **FoxAPIs nodes**: typed REST nodes over `https://api.foxapis.com` (enrich, find email, vet, AI visibility)
-- **14 ready-to-import workflow templates** in `/templates/`
+- **12 ready-to-import workflow templates** in `/templates/`
 - **Two bearer-token credentials** (MentionFox MCP token + FoxAPIs key), each with a built-in credential test
 
 ## Installation
@@ -87,7 +87,7 @@ See `/docs/` for per-resource documentation.
 2. MentionFox node: `Subject` → `vet_person` (founder), pass `{{$json.firstname}} {{$json.lastname}}`
 3. Slack node posts the verdict and public report URL to a channel
 
-Import `/templates/01-auto-vet-inbound-founder-leads.json` to see the full wiring.
+Import `/templates/12-inbound-applicant-vetter-slack-approval.json` to see the full wiring.
 
 ### Example 2: Daily GEO health check
 
@@ -96,7 +96,7 @@ Import `/templates/01-auto-vet-inbound-founder-leads.json` to see the full wirin
 3. MentionFox node: `GEOFixer` → `list_gaps`, top 5
 4. Notion node logs score; Slack node summarises
 
-Import `/templates/02-daily-geo-health-check.json`.
+Import `/templates/04-daily-ai-visibility-drop-alert.json`.
 
 ### Example 3: Reddit signal to personalised outreach
 
@@ -105,26 +105,27 @@ Import `/templates/02-daily-geo-health-check.json`.
 3. MentionFox node: `Outreach` → `build_sequence` (stub in v0.1, returns dashboard URL)
 4. Apollo / Instantly HTTP request to send the sequence
 
-Import `/templates/03-reddit-signal-personalized-outreach.json`.
+Import `/templates/06-mention-draft-reply-hashtags-slack-approval.json`.
 
-## Workflow templates (14)
+## Workflow templates (12)
 
+Full index with setup, nodes, and credit cost per template: **[`templates/TEMPLATES.md`](templates/TEMPLATES.md)**.
 Import any of these via n8n's **Workflows → Import from File**:
 
-1. `01-auto-vet-inbound-founder-leads.json` — HubSpot → MentionFox → Slack
-2. `02-daily-geo-health-check.json` — Cron → GEO audit → Notion + Slack
-3. `03-reddit-signal-personalized-outreach.json` — MentionFox Trigger → Find Contact → Build Sequence → Apollo
-4. `04-vet-candidate-before-interview.json` — Greenhouse webhook → Dossier → conditional Slack red/green
-5. `05-compare-conference-speakers.json` — Eventbrite webhook → Compare 3 → Notion log
-6. `06-crisis-detection-immediate-page.json` — Crisis Trigger → Slack page + Linear incident
-7. `07-foxchat-conversation-to-den-task.json` — FoxChat webhook → Create Den task
-8. `08-dossier-as-a-service-sales-calls.json` — Calendar 60min before → Dossier → Email rep
-9. `09-weekly-ai-visibility-slack-digest.json` — Cron → AI Visibility Monitor → Slack digest
-10. `10-enrich-new-sheet-lead.json` — Sheet row added → Lead Enricher → append row
-11. `11-inbound-vetter-slack.json` — Form submit → Inbound Vetter → Slack summary
-12. `12-new-mention-slack-alert.json` — **New Mention trigger → Slack alert** (the core social-listening flow)
-13. `13-new-lead-enrich-to-sheet.json` — New lead form → Lead Enricher → Google Sheet
-14. `14-find-emails-for-name-list.json` — Sheet of names → Find Email → Google Sheet
+1. `01-brand-mention-slack-alert.json` — New Mention trigger → Slack alert (the core social-listening flow)
+2. `02-mention-enrich-author-sheet.json` — Mention → enrich author → Google Sheet lead list
+3. `03-inbound-lead-find-email-enrich-airtable.json` — Webhook → Find Email + Enrich → Airtable
+4. `04-daily-ai-visibility-drop-alert.json` — Schedule → AI Visibility → score-drop → Slack
+5. `05-competitor-mention-vet-company-digest.json` — Competitor mention → Vet → Slack digest
+6. `06-mention-draft-reply-hashtags-slack-approval.json` — Mention → draft reply + RiteKit hashtags → Slack approval (no auto-post)
+7. `07-high-follower-author-enrich-priority-ping.json` — Big-audience author → Enrich → priority Slack ping
+8. `08-weekly-mentions-digest-sheet-email-draft.json` — Weekly → Sheet log + Gmail summary draft
+9. `09-mention-enrich-fit-score-route-hot.json` — Mention → Enrich → fit score → Hot/All tabs
+10. `10-scheduled-multi-keyword-scan-dedupe-airtable.json` — Schedule → multi-keyword scan → dedupe → Airtable
+11. `11-crisis-signal-immediate-page.json` — Crisis trigger → Slack + Discord page
+12. `12-inbound-applicant-vetter-slack-approval.json` — Form → Inbound Vetter → Slack approval card
+
+Validate them all with `node scripts/verify-templates.js`.
 
 ## Pricing transparency
 
