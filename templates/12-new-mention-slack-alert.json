@@ -1,0 +1,42 @@
+{
+  "name": "New Mention → Slack Alert (MentionFox Trigger)",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "templateId": "mentionfox-12-new-mention-slack-alert"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "triggerType": "on_new_mention",
+        "topic": "your brand or keyword",
+        "sources": "reddit,hackernews,twitter",
+        "hours_back": 1
+      },
+      "id": "1",
+      "name": "On New Mention",
+      "type": "n8n-nodes-mentionfox.mentionFoxTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "credentials": {
+        "mentionFoxApi": { "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID", "name": "MentionFox API" }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#brand-mentions",
+        "text": "=New mention of *{{$json[\"topic\"] || \"your brand\"}}* on {{$json[\"source_platform\"] || $json[\"source\"] || \"the web\"}}:\n\n{{$json[\"content\"] || $json[\"text\"] || \"(no preview)\"}}\n\nSentiment: {{$json[\"sentiment\"] || \"n/a\"}}\n{{$json[\"source_url\"] || $json[\"url\"] || \"\"}}"
+      },
+      "id": "2",
+      "name": "Slack: Mention Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "On New Mention": { "main": [[{ "node": "Slack: Mention Alert", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["mentionfox", "social-listening", "trigger", "slack", "alerts"]
+}

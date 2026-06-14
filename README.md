@@ -3,17 +3,27 @@
 [![npm version](https://img.shields.io/npm/v/n8n-nodes-mentionfox.svg)](https://www.npmjs.com/package/n8n-nodes-mentionfox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
-Community n8n node for [MentionFox](https://mentionfox.com) and FoxAPIs.
+Community n8n nodes for [MentionFox](https://mentionfox.com) and FoxAPIs — social-listening triggers, people enrichment, email finding, company vetting, and AI-visibility monitoring, wired straight into your n8n workflows.
 
-This package gives n8n workflows direct access to MentionFox's research, vetting, dossier, mention-scanning, lead-enrichment, and GEO/AEO scoring tools through the MentionFox MCP (Model Context Protocol) server.
+Get alerted the moment your brand, a competitor, or a buying-intent keyword is mentioned anywhere; enrich a name into a verified contact; find a work email from a domain; vet an inbound lead before you reply; and check whether AI assistants recommend you. Pipe any of it to Slack, Discord, email, Google Sheets, or your CRM.
+
+## What you get
+
+- **MentionFox Trigger** — a polling trigger that fires on each *new* mention of a keyword, brand, or competitor (deduped so every mention emits exactly once). Also: new high-intent leads, GEO score drops, and crisis signals. This is the one that drives alert-and-route workflows.
+- **FoxAPIs: Lead Enricher** — name + any hint → verified email, title, company, and social links.
+- **FoxAPIs: Find Email** — company domain (+ optional name) → verified work email. Charges only on a real match.
+- **FoxAPIs: Inbound Vetter** — email / domain / name → person enrichment + company intel + derived seniority/confidence signals, before you reply.
+- **FoxAPIs: AI Visibility Monitor** — is your brand recommended by AI assistants vs competitors, per assistant, with share-of-voice and gaps.
+- **MentionFox node** — on-demand mention scanning across 50+ platforms, subject vetting, dossiers, comparisons, and GEO/AEO scoring (8 resources, 30+ operations) over the MentionFox MCP server.
+- **14 ready-to-import workflow templates** in `/templates/`.
 
 ## Features
 
-- **8 resources** with **30+ operations** in a single MentionFox node
-- **5 polling triggers** for new mentions, high-intent leads, GEO score drops, new battlecards, and crisis signals
-- **8 ready-to-import workflow templates** in `/templates/`
-- **JSON-RPC 2.0 / MCP transport** to `https://mentionfox.com/mcp`
-- **Bearer-token credential** with built-in test endpoint (hits MCP `tools/list`)
+- **6 nodes**: 1 polling trigger node (5 trigger types) + 5 action nodes
+- **MentionFox node**: 8 resources with 30+ operations over JSON-RPC 2.0 / MCP (`https://mentionfox.com/mcp`)
+- **FoxAPIs nodes**: typed REST nodes over `https://api.foxapis.com` (enrich, find email, vet, AI visibility)
+- **14 ready-to-import workflow templates** in `/templates/`
+- **Two bearer-token credentials** (MentionFox MCP token + FoxAPIs key), each with a built-in credential test
 
 ## Installation
 
@@ -97,7 +107,7 @@ Import `/templates/02-daily-geo-health-check.json`.
 
 Import `/templates/03-reddit-signal-personalized-outreach.json`.
 
-## Workflow templates (8)
+## Workflow templates (14)
 
 Import any of these via n8n's **Workflows → Import from File**:
 
@@ -109,6 +119,12 @@ Import any of these via n8n's **Workflows → Import from File**:
 6. `06-crisis-detection-immediate-page.json` — Crisis Trigger → Slack page + Linear incident
 7. `07-foxchat-conversation-to-den-task.json` — FoxChat webhook → Create Den task
 8. `08-dossier-as-a-service-sales-calls.json` — Calendar 60min before → Dossier → Email rep
+9. `09-weekly-ai-visibility-slack-digest.json` — Cron → AI Visibility Monitor → Slack digest
+10. `10-enrich-new-sheet-lead.json` — Sheet row added → Lead Enricher → append row
+11. `11-inbound-vetter-slack.json` — Form submit → Inbound Vetter → Slack summary
+12. `12-new-mention-slack-alert.json` — **New Mention trigger → Slack alert** (the core social-listening flow)
+13. `13-new-lead-enrich-to-sheet.json` — New lead form → Lead Enricher → Google Sheet
+14. `14-find-emails-for-name-list.json` — Sheet of names → Find Email → Google Sheet
 
 ## Pricing transparency
 
