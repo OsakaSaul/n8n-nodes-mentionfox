@@ -3,18 +3,22 @@
 [![npm version](https://img.shields.io/npm/v/n8n-nodes-mentionfox.svg)](https://www.npmjs.com/package/n8n-nodes-mentionfox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
-Community n8n nodes for [MentionFox](https://mentionfox.com) and FoxAPIs — social-listening triggers, people enrichment, email finding, company vetting, and AI-visibility monitoring, wired straight into your n8n workflows.
+Community n8n nodes for [MentionFox](https://mentionfox.com) and FoxAPIs — **find out who you are actually dealing with**, before you reply, wire money, or take the meeting.
 
-Get alerted the moment your brand, a competitor, or a buying-intent keyword is mentioned anywhere; enrich a name into a verified contact; find a work email from a domain; vet an inbound lead before you reply; and check whether AI assistants recommend you. Pipe any of it to Slack, Discord, email, Google Sheets, or your CRM.
+**Source Check** is the one to start with: paste a pitch, a name, an email address or a link, and get back one of four verdicts — Verified, Partially verified, Could not verify, or Contradicted by record — with every claim paired to the public register that confirmed or contradicted it. Then go deeper with a **Founder Vetting Report** (12-section, investment-grade) or an **Investor Snapshot** (one page: pitch, skip, or pitch with prep).
+
+Around that: contact enrichment, dossiers, comparisons, mention scanning across 50+ platforms, and AI-visibility monitoring. Pipe any of it to Slack, Discord, email, Google Sheets, or your CRM.
 
 ## What you get
 
+- **MentionFox node → Source Check** — is this person who they say they are? Checked against the public registers that govern the credentials they claim. One input, one verdict, every claim sourced.
+- **MentionFox node → Reports** — Founder Vetting Report and Investor Snapshot as first-class operations, plus Export Report for a downloadable HTML / PDF / Markdown file.
 - **MentionFox Trigger** — a polling trigger that fires on each *new* mention of a keyword, brand, or competitor (deduped so every mention emits exactly once). Also: new high-intent leads, GEO score drops, and crisis signals. This is the one that drives alert-and-route workflows.
 - **FoxAPIs: Lead Enricher** — name + any hint → verified email, title, company, and social links.
 - **FoxAPIs: Find Email** — company domain (+ optional name) → verified work email. Charges only on a real match.
 - **FoxAPIs: Inbound Vetter** — email / domain / name → person enrichment + company intel + derived seniority/confidence signals, before you reply.
 - **FoxAPIs: AI Visibility Monitor** — is your brand recommended by AI assistants vs competitors, per assistant, with share-of-voice and gaps.
-- **MentionFox node** — on-demand mention scanning across 50+ platforms, subject vetting, dossiers, comparisons, and GEO/AEO scoring (8 resources, 30+ operations) over the MentionFox MCP server.
+- **MentionFox node — everything else** — mention scanning across 50+ platforms, dossiers, comparisons, and GEO/AEO scoring, over the MentionFox MCP server.
 - **12 ready-to-import workflow templates** in `/templates/`.
 
 ## Features
@@ -23,7 +27,7 @@ Get alerted the moment your brand, a competitor, or a buying-intent keyword is m
 - **MentionFox node**: 8 resources with 30+ operations over JSON-RPC 2.0 / MCP (`https://mentionfox.com/mcp`)
 - **FoxAPIs nodes**: typed REST nodes over `https://api.foxapis.com` (enrich, find email, vet, AI visibility)
 - **12 ready-to-import workflow templates** in `/templates/`
-- **Two bearer-token credentials** (MentionFox MCP token + FoxAPIs key), each with a built-in credential test
+- **Two API-key credentials** (MentionFox key + FoxAPIs key), each with a built-in credential test. The MentionFox key does not expire.
 
 ## Installation
 
@@ -41,29 +45,33 @@ npm install n8n-nodes-mentionfox
 
 ## Authentication
 
-This node uses bearer-token authentication against the MentionFox MCP server.
+A long-lived API key. Paste it once.
 
 1. Visit https://mentionfox.com/connect
 2. Sign in with your MentionFox account
-3. Copy the bearer access token (24-hour expiry; refresh via the same page)
-4. In n8n, create a new **MentionFox API** credential and paste the token
+3. Create an API key — it starts with `mf_pat_`, and it is shown once
+4. In n8n, create a new **MentionFox API** credential and paste the key
 
-n8n will run a credential test against `tools/list` on the MCP server. A green check confirms the token is live.
+n8n runs a credential test against `tools/list`. A green check means the key is live.
 
-> **v0.1 note**: full OAuth-grant flow inside the credential editor is on the v1.1 roadmap. v0.1 uses paste-token for simplicity.
+The key **does not expire**. It works until you revoke it from the same page, where you can also see when each key was last used. Revoking takes effect immediately.
+
+> **Upgrading from v0.1.x**: that version took a 24-hour OAuth token, which is why scheduled workflows died overnight. The server still accepts those tokens, so nothing breaks the moment you upgrade — but replace the credential's value with an `mf_pat_` key and the expiry problem is gone for good. The credential field is the same one; only what you paste into it changed.
 
 ## Resources
 
+Listed in the order they appear in the node — what people came for first, the internal-facing surface last.
+
 | Resource | Operations |
 |---|---|
+| **Source Check** | source_check |
+| **Report** | founder_report, investor_report, export_report |
 | Subject | vet_person, get_dossier, compare_subjects, evaluate_influencer |
-| Mention | scan, list_recent, score_intent, get_by_id |
 | Lead | find_contact, enrich_person, score_lead, push_to_dealflow |
-| GEOFixer | run_audit, get_score, list_gaps, autopilot_status, autopilot_toggle |
-| Outreach | build_sequence, send_sequence, get_sequence_status, list_replies |
-| Chat | start_session, send_message, get_history, export_transcript |
-| Den | list_dens, get_den_widget_data, create_den_task, list_den_tasks |
-| Client | list_clients, create_client, get_client_geo_score, list_client_battlecards |
+| Mention | scan, list_recent, score_intent, get_by_id |
+| Advanced: GEOFixer | run_audit, get_score, list_gaps, autopilot_status, autopilot_toggle |
+
+Nothing was removed in 0.2.0. Every resource `value` and every operation `value` is unchanged, so workflows built on 0.1.x keep resolving — GEOFixer simply moved to the bottom and is labelled Advanced. Outreach, Chat, Den and Client remain hidden pending MCP v1.5, exactly as in 0.1.x; their handlers and descriptions are still in the package.
 
 Operations whose dedicated MCP tool is pending in v0.1 surface as transparent stubs that return the dashboard URL plus your input arguments unchanged. Workflows wired against stubs light up automatically once MentionFox MCP v1.5 ships dedicated tools — no node version bump required.
 

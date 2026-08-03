@@ -8,16 +8,20 @@ import {
 /**
  * MentionFox API credential.
  *
- * Auth model (v0.1):
- *   The MentionFox MCP server (https://mentionfox.com/mcp) accepts a
- *   bearer access token issued via the OAuth flow at https://mentionfox.com/connect.
- *   For n8n we ask the user to paste the token directly. v1.1 will add a
- *   full OAuth grant flow inside the credential editor.
+ * Auth model (v0.2):
+ *   Paste an API key from https://mentionfox.com/connect. Keys start with
+ *   `mf_pat_`, do not expire, and keep working until you revoke them — so a
+ *   workflow you build once keeps running.
+ *
+ *   Before v0.2 this field took an OAuth access token, which expired 24 hours
+ *   after it was pasted and left every scheduled workflow dead by morning. Those
+ *   tokens are still accepted by the server, so an existing credential keeps
+ *   working until it lapses; replace it with a key and the problem goes away.
  *
  * Credential test:
  *   POSTs a JSON-RPC 2.0 `tools/list` to the MCP endpoint. Success = HTTP 200
- *   plus a `result.tools` array. Anything else (revoked token, expired token,
- *   network failure) bubbles up as a credential-test failure in n8n's UI.
+ *   plus a `result.tools` array. A revoked key, an expired legacy token or a
+ *   network failure all surface as a credential-test failure in n8n's UI.
  */
 export class MentionFoxApi implements ICredentialType {
 	name = 'mentionFoxApi';
@@ -28,14 +32,17 @@ export class MentionFoxApi implements ICredentialType {
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Bearer Token',
+			// The field name stays `apiKey` so credentials saved by v0.1.x keep
+			// resolving — only what you paste into it has changed.
+			displayName: 'API Key',
 			name: 'apiKey',
 			type: 'string',
 			typeOptions: { password: true },
 			default: '',
 			required: true,
+			placeholder: 'mf_pat_...',
 			description:
-				'Bearer access token from https://mentionfox.com/connect. v0.1 uses paste-token; v1.1 will add a full OAuth flow inside this credential.',
+				'Long-lived API key from https://mentionfox.com/connect (starts with mf_pat_). It does not expire and works until you revoke it. Legacy 24-hour OAuth tokens are still accepted, but will stop working a day after you paste them.',
 		},
 		{
 			displayName: 'MCP Endpoint',
@@ -81,7 +88,7 @@ export class MentionFoxApi implements ICredentialType {
 					key: 'result.tools',
 					value: undefined,
 					message:
-						'Token accepted but no tools list returned. Check that your token is valid at https://mentionfox.com/connect.',
+						'Key accepted but no tools list returned. Check that your key is still active at https://mentionfox.com/connect.',
 				},
 			},
 		],

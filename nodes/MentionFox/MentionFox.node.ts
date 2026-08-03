@@ -9,6 +9,8 @@ import {
 
 import { mentionFoxMcpCall } from './GenericFunctions';
 
+import { sourceCheckOperations, sourceCheckFields } from './descriptions/SourceCheckDescription';
+import { reportOperations, reportFields } from './descriptions/ReportDescription';
 import {
 	subjectOperations,
 	subjectFields,
@@ -43,7 +45,7 @@ export class MentionFox implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description: 'OSINT, dossiers, mention scanning, lead enrichment, GEOFixer scoring, and pipeline watch via MentionFox.',
+		description: 'Verify who you are dealing with. Source Check against public registers, Founder Vetting Reports, Investor Snapshots, dossiers, contact enrichment and mention scanning.',
 		defaults: { name: 'MentionFox' },
 		inputs: ['main'],
 		outputs: ['main'],
@@ -54,21 +56,36 @@ export class MentionFox implements INodeType {
 				name: 'resource',
 				type: 'options',
 				noDataExpression: true,
+				// The ruleset wants these alphabetised. They are ordered by what a
+				// person actually came for instead — Source Check first, the
+				// internal-facing surface last — because this list IS the product
+				// tour for anyone opening the node for the first time.
+				// Order is deliberate and NOT alphabetical: what people came for is at
+				// the top, the internal-flavoured surface is prefixed "Advanced" and
+				// sits at the bottom. Every `value` is unchanged, so a workflow built
+				// against an earlier version keeps resolving.
+				// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 				options: [
+					{ name: 'Source Check', value: 'sourceCheck', description: 'Is this person who they say they are? Checked against public registers' },
+					{ name: 'Report', value: 'report', description: 'Founder Vetting Report, Investor Snapshot, and downloadable exports' },
+					{ name: 'Subject', value: 'subject', description: 'Vetting, dossiers, comparisons' },
+					{ name: 'Lead', value: 'lead', description: 'Find / enrich / push to dealflow' },
+					{ name: 'Mention', value: 'mention', description: 'Scan platforms, list recent' },
 					// HIDDEN until MCP v1.5: Chat / Den / Outreach are pure stubs; Client is
-					// mostly stub (its one live op, get_client_geo_score, is already covered by
-					// GEOFixer → Get Score). Handlers + descriptions kept so they re-add cleanly.
+					// mostly stub (its one live op, get_client_geo_score, is already covered
+					// by GEOFixer Get Score). Handlers + descriptions kept so they re-add cleanly.
 					// { name: 'Chat', value: 'chat', description: 'FoxChat sessions (stubs in v0.1)' },
 					// { name: 'Client', value: 'client', description: 'Agency client management' },
 					// { name: 'Den', value: 'den', description: 'FoxDen widgets + tasks (stubs in v0.1)' },
-					{ name: 'GEOFixer', value: 'geoFixer', description: 'GEO/AEO scoring + audit + gaps' },
-					{ name: 'Lead', value: 'lead', description: 'Find / enrich / push to dealflow' },
-					{ name: 'Mention', value: 'mention', description: 'Scan platforms, list recent' },
 					// { name: 'Outreach', value: 'outreach', description: 'Sequences (stubs in v0.1)' },
-					{ name: 'Subject', value: 'subject', description: 'Vetting, dossiers, comparisons' },
+					{ name: 'Advanced: GEOFixer', value: 'geoFixer', description: 'GEO/AEO scoring, audit, gaps, autopilot' },
 				],
-				default: 'subject',
+				default: 'sourceCheck',
 			},
+			...sourceCheckOperations,
+			...sourceCheckFields,
+			...reportOperations,
+			...reportFields,
 			...subjectOperations,
 			...subjectFields,
 			...mentionOperations,
@@ -118,6 +135,54 @@ export class MentionFox implements INodeType {
 	}
 }
 
+// Source Check - the flagship
+// ------------------------------------------------------------------
+async function runSourceCheck(this: IExecuteFunctions, op: string, i: number): Promise<IDataObject> {
+	if (op === 'source_check') {
+		const input = (this.getNodeParameter('input', i) as string).trim();
+		if (!input) {
+			throw new NodeOperationError(this.getNode(), 'Paste the pitch, name, email address or link naming the person to check.', { itemIndex: i });
+		}
+		const args: IDataObject = { input };
+		const optional: Array<[string, string]> = [['sc_name', 'name'], ['sc_title', 'title'], ['sc_employer', 'employer']];
+		for (const [param, key] of optional) {
+			const v = (this.getNodeParameter(param, i, '') as string).trim();
+			if (v) args[key] = v;
+		}
+		return mentionFoxMcpCall.call(this, 'source_check', args);
+	}
+	throw new NodeOperationError(this.getNode(), `Unknown source check operation: ${op}`, { itemIndex: i });
+}
+
+// ------------------------------------------------------------------
+// Report - the two long-form documents, and the exporter
+// ------------------------------------------------------------------
+async function runReport(this: IExecuteFunctions, op: string, i: number): Promise<IDataObject> {
+	if (op === 'founder_report' || op === 'investor_report') {
+		const isInvestor = op === 'investor_report';
+		const args: IDataObject = {};
+		const name = (this.getNodeParameter(isInvestor ? 'report_investor_name' : 'report_name', i, '') as string).trim();
+		const personId = (this.getNodeParameter('report_person_id', i, '') as string).trim();
+		const hint = (this.getNodeParameter(isInvestor ? 'report_firm' : 'report_company', i, '') as string).trim();
+		if (name) args.name = name;
+		if (personId) args.person_id = personId;
+		if (hint) args[isInvestor ? 'firm' : 'company'] = hint;
+		if (!args.name && !args.person_id) {
+			throw new NodeOperationError(this.getNode(), 'Provide either a Name or a Person ID.', { itemIndex: i });
+		}
+		return mentionFoxMcpCall.call(this, isInvestor ? 'get_investor_report' : 'get_entrepreneur_report', args);
+	}
+	if (op === 'export_report') {
+		const args: IDataObject = {
+			report_type: this.getNodeParameter('export_report_type', i) as string,
+			report_id: this.getNodeParameter('export_report_id', i) as string,
+			format: this.getNodeParameter('export_format', i, 'pdf') as string,
+		};
+		return mentionFoxMcpCall.call(this, 'export_report', args);
+	}
+	throw new NodeOperationError(this.getNode(), `Unknown report operation: ${op}`, { itemIndex: i });
+}
+
 // Stub helper — used for every operation whose MCP tool is pending. Returns
 // a structured response so downstream nodes can branch on `status`.
 function stubResponse(tool: string, args: IDataObject, dashboardUrl: string): IDataObject {
@@ -137,6 +202,10 @@ async function dispatch(
 	i: number,
 ): Promise<IDataObject> {
 	switch (resource) {
+		case 'sourceCheck':
+			return runSourceCheck.call(this, operation, i);
+		case 'report':
+			return runReport.call(this, operation, i);
 		case 'subject':
 			return runSubject.call(this, operation, i);
 		case 'mention':

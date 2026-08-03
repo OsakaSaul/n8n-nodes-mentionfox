@@ -1,8 +1,11 @@
 {
   "name": "n8n-nodes-mentionfox",
   "version": "0.2.0",
-  "description": "n8n community nodes for MentionFox + FoxAPIs - subject vetting, mention scanning, AI-visibility monitoring, lead enrichment, GEOFixer, pipeline watch, dossiers, and journalism discovery.",
+  "description": "n8n community nodes for MentionFox + FoxAPIs - Source Check a person against public registers, Founder Vetting Reports, Investor Snapshots, dossiers, contact enrichment, mention scanning and AI-visibility monitoring.",
   "keywords": [
+    "investor-research",
+    "verification",
+    "source-check",
     "n8n-community-node-package",
     "mentionfox",
     "foxapis",
