@@ -1,0 +1,222 @@
+{
+  "name": "Applicant Screening to Slack (Source Check + dossier)",
+  "meta": {
+    "templateId": "mentionfox-applicant-screening"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Applicant Screening to Slack\n\n**What it does:** an applicant arrives by webhook from your ATS. The flow Source Checks the credentials they claim, pulls a dossier in parallel, formats both into one short summary and posts it to the hiring channel.\n\n**Read this before you use it:** this is decision *support*. Could not verify is not a finding against a candidate - plenty of real credentials are simply not in a public register. The value is that a human reads the evidence instead of the claim.\n\n**Setup**\n1. **Applicant Webhook** - POST `{ name, title, employer, notes }` from your ATS to the production URL n8n shows you.\n2. Both MentionFox nodes need the **MentionFox API credential** - a key from mentionfox.com/connect, starting `mf_pat_`.\n3. **Post to Hiring** - set your channel, or swap for the Send Email node.\n\n**Cost:** Source Check 25 credits, Get Dossier 30.",
+        "height": 600,
+        "width": 460,
+        "color": 4
+      },
+      "id": "sticky",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "applicant-screening",
+        "options": {}
+      },
+      "id": "hook",
+      "name": "Applicant Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "POST { name, title, employer, notes } from your ATS."
+    },
+    {
+      "parameters": {
+        "resource": "sourceCheck",
+        "operation": "source_check",
+        "input": "={{ $json.body.notes }}",
+        "sc_name": "={{ $json.body.name }}",
+        "sc_title": "={{ $json.body.title }}",
+        "sc_employer": "={{ $json.body.employer }}"
+      },
+      "id": "check",
+      "name": "Source Check",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [
+        480,
+        200
+      ],
+      "notes": "MCP tool source_check - checks the stated credential against the register that governs it. 25 credits.",
+      "credentials": {
+        "mentionFoxApi": {
+          "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID",
+          "name": "MentionFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "subject",
+        "operation": "get_dossier",
+        "name": "={{ $json.body.name }}",
+        "format": "summary"
+      },
+      "id": "dossier",
+      "name": "Get Dossier",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [
+        480,
+        400
+      ],
+      "notes": "MCP tool get_dossier - background, roles, public record. 30 credits.",
+      "credentials": {
+        "mentionFoxApi": {
+          "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID",
+          "name": "MentionFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "merge",
+      "name": "Combine",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        740,
+        300
+      ],
+      "notes": "Waits for both branches so the summary always has each part."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ '*' + $('Applicant Webhook').item.json.body.name + '* - ' + $('Applicant Webhook').item.json.body.title + ' at ' + $('Applicant Webhook').item.json.body.employer + '\\n\\nSource Check: *' + $('Source Check').item.json.verdict + '*\\nReference: ' + $('Source Check').item.json.report_ref + '\\n\\n' + $('Get Dossier').item.json.summary }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fmt",
+      "name": "Format Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        300
+      ],
+      "notes": "One message, both sources, short enough to actually be read."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#hiring",
+          "mode": "name"
+        },
+        "text": "={{ $json.summary }}",
+        "otherOptions": {}
+      },
+      "id": "slack",
+      "name": "Post to Hiring",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        300
+      ],
+      "notes": "Swap for n8n-nodes-base.emailSend if your hiring loop lives in email."
+    }
+  ],
+  "connections": {
+    "Applicant Webhook": {
+      "main": [
+        [
+          {
+            "node": "Source Check",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Dossier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Source Check": {
+      "main": [
+        [
+          {
+            "node": "Combine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Dossier": {
+      "main": [
+        [
+          {
+            "node": "Combine",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine": {
+      "main": [
+        [
+          {
+            "node": "Format Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Summary": {
+      "main": [
+        [
+          {
+            "node": "Post to Hiring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "mentionfox",
+    "source-check",
+    "screening",
+    "hiring",
+    "slack"
+  ]
+}

@@ -1,0 +1,240 @@
+{
+  "name": "Lead Vetting to CRM (Source Check first, enrich only what survives)",
+  "meta": {
+    "templateId": "mentionfox-lead-vetting-to-crm"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Lead Vetting to CRM\n\n**What it does:** every new lead is Source Checked *before* you spend anything on it. A lead whose claims are contradicted by the public record is flagged to Slack and stops there. A lead that checks out is enriched and pushed to your CRM.\n\n**Why this order:** enrichment costs credits and a salesperson's attention. Spending both on someone who is not who they say they are is the expensive mistake this removes.\n\n**Setup**\n1. **New Lead** - the built-in form. Swap for your own webhook, HubSpot or Typeform trigger.\n2. **Source Check** - needs the **MentionFox API credential**: create a key at mentionfox.com/connect (it starts `mf_pat_`, does not expire, revoke any time) and paste it into a *MentionFox API* credential in n8n.\n3. **Verdict OK?** - routes on the verdict. Verified and Partially verified pass; Could not verify and Contradicted by record are flagged.\n4. **Flag for Review** - pick your channel, or swap for email.\n5. **Push to CRM** - an HTTP Request node. Point the URL at your CRM and adjust the body.\n\n**Cost:** Source Check 25 credits, Enrich Person 5. A flagged lead costs nothing beyond the check.",
+        "height": 640,
+        "width": 460,
+        "color": 4
+      },
+      "id": "sticky",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "New lead",
+        "formDescription": "Paste whatever they sent you - the whole email or DM works best.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company"
+            },
+            {
+              "fieldLabel": "Their message",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "form",
+      "name": "New Lead",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "Entry point. Replace with your CRM or webhook trigger; keep the field names or update the expressions downstream."
+    },
+    {
+      "parameters": {
+        "resource": "sourceCheck",
+        "operation": "source_check",
+        "input": "={{ $json['Their message'] }}",
+        "sc_name": "={{ $json['Name'] }}",
+        "sc_employer": "={{ $json['Company'] }}"
+      },
+      "id": "check",
+      "name": "Source Check",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ],
+      "notes": "MCP tool source_check. Returns one of four verdicts with every claim paired to the register that confirmed or contradicted it. 25 credits.",
+      "credentials": {
+        "mentionFoxApi": {
+          "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID",
+          "name": "MentionFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "verdict",
+              "leftValue": "={{ $json.verdict }}",
+              "rightValue": "erified",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "gate",
+      "name": "Verdict OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ],
+      "notes": "True branch = Verified / Partially verified. False branch = Could not verify / Contradicted by record."
+    },
+    {
+      "parameters": {
+        "resource": "lead",
+        "operation": "enrich_person",
+        "name": "={{ $('New Lead').item.json['Name'] }}",
+        "company": "={{ $('New Lead').item.json['Company'] }}"
+      },
+      "id": "enrich",
+      "name": "Enrich Person",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [
+        960,
+        200
+      ],
+      "notes": "MCP tool enrich_person - verified email, title, company, social links. 5 credits.",
+      "credentials": {
+        "mentionFoxApi": {
+          "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID",
+          "name": "MentionFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.crm/api/contacts",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $('New Lead').item.json['Name'], company: $('New Lead').item.json['Company'], email: $json.email, source_check_ref: $('Source Check').item.json.report_ref, verdict: $('Source Check').item.json.verdict }) }}",
+        "options": {}
+      },
+      "id": "crm",
+      "name": "Push to CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        200
+      ],
+      "notes": "Point this at your CRM. The Source Check reference travels with the record so anyone can reopen the evidence."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#lead-review",
+          "mode": "name"
+        },
+        "text": "=:mag: Lead did not clear Source Check\n*{{ $('New Lead').item.json['Name'] }}* - {{ $('New Lead').item.json['Company'] }}\nVerdict: *{{ $json.verdict }}*\nReference: {{ $json.report_ref }}",
+        "otherOptions": {}
+      },
+      "id": "flag",
+      "name": "Flag for Review",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        420
+      ],
+      "notes": "A human decides. Nothing is auto-rejected - the verdict is evidence, not a judgement."
+    }
+  ],
+  "connections": {
+    "New Lead": {
+      "main": [
+        [
+          {
+            "node": "Source Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Source Check": {
+      "main": [
+        [
+          {
+            "node": "Verdict OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verdict OK?": {
+      "main": [
+        [
+          {
+            "node": "Enrich Person",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Flag for Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Person": {
+      "main": [
+        [
+          {
+            "node": "Push to CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "mentionfox",
+    "source-check",
+    "verification",
+    "crm",
+    "lead-vetting"
+  ]
+}

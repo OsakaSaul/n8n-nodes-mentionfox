@@ -16,11 +16,11 @@ export const sourceCheckOperations: INodeProperties[] = [
 		displayOptions: { show: { resource: ['sourceCheck'] } },
 		options: [
 			{
-				name: 'Check a Person',
+				name: 'Verify a Person or Company',
 				value: 'source_check',
 				description:
-					'Confirm whether a person is who they say they are, against the public registers that govern their stated credentials',
-				action: 'Check whether a person is who they claim to be',
+					'Is this person who they say they are? Their stated credentials are checked against the public registers that govern them, and you get one of four verdicts with every claim sourced',
+				action: 'Verify a person or company against public registers',
 			},
 		],
 		default: 'source_check',

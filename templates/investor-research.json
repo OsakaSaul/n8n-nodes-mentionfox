@@ -1,0 +1,186 @@
+{
+  "name": "Investor Research to Sheet / Notion / HTTP",
+  "meta": {
+    "templateId": "mentionfox-investor-research"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Investor Research\n\n**What it does:** you type an investor's name into a form; it generates an **Investor Snapshot** - one page, founder-side: stage fit, trajectory, three strengths, three risk flags, and a one-line pitch / skip / pitch-with-prep - and appends it to your research sheet.\n\n**Use it while building a raise list.** Run every name through it before you spend a week chasing the wrong fund.\n\n**Setup**\n1. **Investor Name** - the built-in form, two fields.\n2. **Investor Snapshot** - needs the **MentionFox API credential** (`mf_pat_` key from mentionfox.com/connect).\n3. **Append to Research** - an HTTP Request node, so the template imports with no extra credential. Point it at Google Sheets, Notion or Airtable instead - the fields are already flattened in *Shape the Row*.\n\n**Cost:** one Investor Snapshot per name.",
+        "height": 580,
+        "width": 460,
+        "color": 4
+      },
+      "id": "sticky",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Research an investor",
+        "formDescription": "One name at a time. Add the firm if the name is common.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Investor",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Firm"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "form",
+      "name": "Investor Name",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "Entry point. Swap for a Google Sheets trigger to run a whole raise list."
+    },
+    {
+      "parameters": {
+        "resource": "report",
+        "operation": "investor_report",
+        "report_investor_name": "={{ $json['Investor'] }}",
+        "report_firm": "={{ $json['Firm'] }}"
+      },
+      "id": "snap",
+      "name": "Investor Snapshot",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ],
+      "notes": "MCP tool get_investor_report - one-page founder-side read on a VC or angel.",
+      "credentials": {
+        "mentionFoxApi": {
+          "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID",
+          "name": "MentionFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "n",
+              "name": "investor",
+              "type": "string",
+              "value": "={{ $('Investor Name').item.json['Investor'] }}"
+            },
+            {
+              "id": "f",
+              "name": "firm",
+              "type": "string",
+              "value": "={{ $('Investor Name').item.json['Firm'] }}"
+            },
+            {
+              "id": "r",
+              "name": "recommendation",
+              "type": "string",
+              "value": "={{ $json.recommendation }}"
+            },
+            {
+              "id": "u",
+              "name": "public_url",
+              "type": "string",
+              "value": "={{ $json.public_url }}"
+            },
+            {
+              "id": "d",
+              "name": "researched_at",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "row",
+      "name": "Shape the Row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        740,
+        300
+      ],
+      "notes": "Flat fields, ready for whichever destination you use."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.com/webhook/investor-research",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "out",
+      "name": "Append to Research",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        300
+      ],
+      "notes": "Replace with Google Sheets (Append Row), Notion (Create Database Page) or Airtable - the row is already shaped."
+    }
+  ],
+  "connections": {
+    "Investor Name": {
+      "main": [
+        [
+          {
+            "node": "Investor Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Investor Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Shape the Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape the Row": {
+      "main": [
+        [
+          {
+            "node": "Append to Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "mentionfox",
+    "investor-research",
+    "fundraising",
+    "reports"
+  ]
+}

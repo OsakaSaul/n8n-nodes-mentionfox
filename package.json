@@ -1,12 +1,12 @@
 {
   "name": "n8n-nodes-mentionfox",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "n8n community nodes for MentionFox + FoxAPIs - Source Check a person against public registers, Founder Vetting Reports, Investor Snapshots, dossiers, contact enrichment, mention scanning and AI-visibility monitoring.",
   "keywords": [
+    "n8n-community-node-package",
     "investor-research",
     "verification",
     "source-check",
-    "n8n-community-node-package",
     "mentionfox",
     "foxapis",
     "osint",
@@ -18,7 +18,12 @@
     "vc",
     "investor",
     "founder-vetting",
-    "journalism"
+    "journalism",
+    "background-check",
+    "screening",
+    "kyc",
+    "lead-enrichment",
+    "people-search"
   ],
   "license": "MIT",
   "homepage": "https://mentionfox.com",

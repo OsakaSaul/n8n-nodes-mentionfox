@@ -1,0 +1,163 @@
+{
+  "name": "Founder Due Diligence Before the Meeting (email brief)",
+  "meta": {
+    "templateId": "mentionfox-founder-dd-before-meeting"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Founder Due Diligence Before the Meeting\n\n**What it does:** every weekday morning it takes the founder you are meeting, generates a **Founder Vetting Report**, and emails you the brief before you walk in.\n\n**Where the name comes from:** the *Today's Founder* node holds it as a plain value so the template runs the moment you import it. Swap it for the Google Calendar node (Get Many Events, filtered to today) and map the attendee or event title into `founder_name`.\n\n**Setup**\n1. **Every Weekday 7am** - adjust the hour to your timezone.\n2. **Founder Vetting Report** - needs the **MentionFox API credential** (`mf_pat_` key from mentionfox.com/connect).\n3. **Email the Brief** - set your from/to addresses and SMTP credential.\n\n**Cost:** one Founder Vetting Report per founder - twelve sections, investment-grade. Check your plan's per-report cost before pointing this at a long list.",
+        "height": 620,
+        "width": 460,
+        "color": 4
+      },
+      "id": "sticky",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "cron",
+      "name": "Every Weekday 7am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "Weekdays at 07:00. Change the expression for your timezone."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f",
+              "name": "founder_name",
+              "type": "string",
+              "value": "Patrick Collison"
+            },
+            {
+              "id": "c",
+              "name": "company",
+              "type": "string",
+              "value": "Stripe"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "names",
+      "name": "Todays Founder",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        300
+      ],
+      "notes": "Placeholder so the template runs on import. Replace with Google Calendar (Get Many Events) and map an attendee into founder_name."
+    },
+    {
+      "parameters": {
+        "resource": "report",
+        "operation": "founder_report",
+        "report_name": "={{ $json.founder_name }}",
+        "report_company": "={{ $json.company }}"
+      },
+      "id": "report",
+      "name": "Founder Vetting Report",
+      "type": "n8n-nodes-mentionfox.mentionFox",
+      "typeVersion": 1,
+      "position": [
+        720,
+        300
+      ],
+      "notes": "MCP tool get_entrepreneur_report - exit history, career arc, cap table, burn and runway, reputation, red flags.",
+      "credentials": {
+        "mentionFoxApi": {
+          "id": "REPLACE_WITH_MENTIONFOX_CREDENTIAL_ID",
+          "name": "MentionFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "briefs@example.com",
+        "toEmail": "you@example.com",
+        "subject": "=Before your meeting: {{ $('Todays Founder').item.json.founder_name }}",
+        "emailFormat": "text",
+        "text": "={{ JSON.stringify($json, null, 2) }}",
+        "options": {}
+      },
+      "id": "mail",
+      "name": "Email the Brief",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        980,
+        300
+      ],
+      "notes": "Set your SMTP credential. Swap for Gmail or Slack if that is where you read before a meeting."
+    }
+  ],
+  "connections": {
+    "Every Weekday 7am": {
+      "main": [
+        [
+          {
+            "node": "Todays Founder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todays Founder": {
+      "main": [
+        [
+          {
+            "node": "Founder Vetting Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Founder Vetting Report": {
+      "main": [
+        [
+          {
+            "node": "Email the Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "mentionfox",
+    "due-diligence",
+    "founder-vetting",
+    "meetings",
+    "email"
+  ]
+}

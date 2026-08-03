@@ -87,6 +87,19 @@ See `/docs/` for per-resource documentation.
 | On New Battlecard Generated | Polls battlecards (stub — heartbeat only in v0.1) |
 | On Crisis Signal Detected | Polls scan filtered to crisis keywords; recommended faster cadence |
 
+## Ready-made workflows
+
+Four workflows built around verification. Download the file, then in n8n: **Workflows → Import from File**. Each carries a sticky note with the setup steps and the credit cost, and each uses the **MentionFox API** credential — an `mf_pat_` key from [mentionfox.com/connect](https://mentionfox.com/connect).
+
+| Workflow | What it does |
+|---|---|
+| [Lead vetting → CRM](templates/lead-vetting-to-crm.json) | Source Check every new lead first; flag the ones the record contradicts, enrich and push only the ones that clear |
+| [Applicant screening](templates/applicant-screening.json) | Applicant webhook → Source Check + dossier in parallel → one short summary in your hiring channel |
+| [Founder DD before the meeting](templates/founder-dd-before-meeting.json) | Weekday morning: a Founder Vetting Report on whoever you are meeting, emailed before you walk in |
+| [Investor research](templates/investor-research.json) | Type an investor's name, get an Investor Snapshot, append it to your raise-list sheet |
+
+Twelve more workflows covering mention alerts, enrichment and AI-visibility live in [`/templates`](templates/) — see [TEMPLATES.md](templates/TEMPLATES.md). The folder ships in the repo, not in the npm tarball, so installing the node stays small.
+
 ## Worked examples
 
 ### Example 1: Vet inbound founder leads from HubSpot

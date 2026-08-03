@@ -44,7 +44,7 @@ export class MentionFox implements INodeType {
 		icon: 'file:icons/mentionfox.svg',
 		group: ['transform'],
 		version: 1,
-		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		description: 'Verify who you are dealing with. Source Check against public registers, Founder Vetting Reports, Investor Snapshots, dossiers, contact enrichment and mention scanning.',
 		defaults: { name: 'MentionFox' },
 		inputs: ['main'],
