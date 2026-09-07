@@ -6,8 +6,20 @@ name: Publish (verified, with provenance)
 # so npm can mint the OIDC-signed provenance attestation on GitHub Actions.
 #
 # Trigger: publish a GitHub Release (recommended), or run manually.
-# Requires repo secret NPM_TOKEN = an npm Automation/Granular token with
-# publish rights, on an npm account with 2FA "auth-only" (not "auth-and-writes").
+#
+# AUTH IS OIDC, NOT A TOKEN. npm Trusted Publishing exchanges the Actions OIDC
+# token for publish rights, so no NPM_TOKEN is passed to the publish step. A
+# token supplied alongside Trusted Publishing can take precedence over the OIDC
+# exchange, which is the failure this avoids: the publish succeeds on the token
+# and the trusted-publisher path is never exercised, so nobody finds out it was
+# misconfigured until the token is rotated away.
+#
+# The NPM_TOKEN repo secret is deliberately LEFT IN PLACE, unreferenced, as the
+# way back if a trusted publish fails. Delete it only after one has succeeded.
+#
+# Requires npm >= 11.5.1 and Node >= 22.14.0. Node 22 ships npm 10.9.8 (checked
+# against nodejs.org/dist/index.json), which is below that floor, so npm is
+# upgraded in its own step before the publish rather than assumed.
 
 on:
   release:
@@ -27,8 +39,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
+      # Trusted Publishing needs npm >= 11.5.1; Node 22 bundles 10.9.8. Printed
+      # before and after so a failed publish can be told apart from a Node image
+      # that quietly changed what it ships.
+      - name: Upgrade npm for Trusted Publishing
+        run: |
+          echo "node $(node --version), npm $(npm --version) as shipped"
+          npm install -g npm@latest
+          echo "npm $(npm --version) after upgrade"
+          npm --version | awk -F. '{ if ($1 < 11 || ($1 == 11 && ($2 < 5 || ($2 == 5 && $3 < 1)))) { print "npm " $0 " is below the 11.5.1 Trusted Publishing floor"; exit 1 } }'
       - name: Install dependencies
         run: npm ci || npm install
       - name: Lint
@@ -37,5 +58,3 @@ jobs:
         run: npm run build
       - name: Publish to npm (provenance)
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
