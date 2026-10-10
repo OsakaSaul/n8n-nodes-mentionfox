@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-mentionfox",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "n8n community nodes for MentionFox + FoxAPIs - Source Check a person against public registers, Founder Vetting Reports, Investor Snapshots, dossiers, contact enrichment, mention scanning and AI-visibility monitoring.",
   "keywords": [
     "n8n-community-node-package",
